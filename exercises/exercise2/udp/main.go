@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	ServerIP   = "10.0.0.17"
-	ServerPort = "20000"
-	LocalPort  = 20001
-	Message    = "Hello from Group 15"
+	DiscoveryPort = "30000"
+	ServerPort    = "20000"
+	LocalPort     = 20001
+	Message       = "Hello from Group 15"
 )
 
 func main() {
@@ -21,7 +21,10 @@ func main() {
 	}
 	defer conn.Close()
 
-	serverAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%s", ServerIP, ServerPort))
+	serverIP := discoverServerIP(DiscoveryPort)
+	fmt.Printf("Server discovered at: %s\n", serverIP)
+
+	serverAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%s", serverIP, ServerPort))
 	if err != nil {
 		fmt.Printf("Failed to resolve server address: %v\n", err)
 		return
@@ -32,6 +35,27 @@ func main() {
 	go receiveLoop(conn)
 
 	sendLoop(conn, serverAddr)
+}
+
+func discoverServerIP(port string) string {
+	addr, _ := net.ResolveUDPAddr("udp", ":"+port)
+	tempConn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		fmt.Printf("Discovery error: %v\n", err)
+		return ""
+	}
+	defer tempConn.Close()
+
+	buffer := make([]byte, 1024)
+
+	n, remoteAddr, err := tempConn.ReadFromUDP(buffer)
+	if err != nil {
+		fmt.Printf("Read error during discovery: %v\n", err)
+		return ""
+	}
+
+	fmt.Printf("Found server! Message: %s\n", string(buffer[:n]))
+	return remoteAddr.IP.String()
 }
 
 func setupUDPConnection(port int) (*net.UDPConn, error) {
