@@ -32,19 +32,38 @@ class Resource(T) {
         Mutex               mtx;
         Condition           cond;
         PriorityQueue!int   queue;
+        bool                busy;
     }
     
     this(){
         mtx     = new Mutex();
         cond    = new Condition(mtx);
+        busy    = false;
     }
     
     T allocate(int id, int priority){
+        mtx.lock();
+        queue.insert(id, priority);
+
+        while(busy || queue.front() != id){
+            cond.wait();
+        }
+
+        busy = true;
+        queue.popFront();
+
+        mtx.unlock();
         return value;
     }
     
     void deallocate(T v){
+        mtx.lock();
+
         value = v;
+        busy = false;
+
+        cond.notifyAll();
+        mtx.unlock();
     }
 }
 
