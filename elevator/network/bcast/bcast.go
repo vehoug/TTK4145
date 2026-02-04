@@ -88,6 +88,7 @@ type typeTaggedJSON struct {
 //	Element types of channels must be encodable with JSON
 //	No element types are repeated
 //
+// hei
 // Implementation note:
 //   - Why there is no `isMarshalable()` function in encoding/json is a mystery,
 //     so the tests on element type are hand-copied from `encoding/json/encode.go`
