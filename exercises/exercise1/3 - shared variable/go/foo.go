@@ -14,6 +14,8 @@ func incrementing(ch_incr chan bool, ch_done chan bool) {
 	ch_done <- true
 }
 
+//comment
+
 func decrementing(ch_decr chan bool, ch_done chan bool) {
 	for range 1000000 {
 		ch_decr <- true
