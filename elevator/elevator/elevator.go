@@ -16,7 +16,7 @@ func Elevator(
 		doorOpenCh      = make(chan bool, config.ChannelBufferSize)
 		doorClosedCh    = make(chan bool, config.ChannelBufferSize)
 		obstructionCh   = make(chan bool, config.ChannelBufferSize)
-		motorInactiveCh = make(chan bool, 16)
+		motorInactiveCh = make(chan bool, config.ChannelBufferSize)
 		orders          Orders
 	)
 
@@ -55,11 +55,13 @@ func Elevator(
 					state.CurrentBehaviour = Moving
 					motorTimer.Reset(config.WatchdogTime)
 					state.ActiveStatus = true
+					newStateCh <- state
 
 				case orders.orderAtCurrentFloorOppositeDirection(state.CurrentFloor, state.Direction):
 					doorOpenCh <- true
 					state.Direction = state.Direction.Opposite()
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
+					newStateCh <- state
 
 				case orders.orderOppositeDirection(state.CurrentFloor, state.Direction):
 					state.Direction = state.Direction.Opposite()
@@ -67,13 +69,15 @@ func Elevator(
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					motorTimer.Reset(config.WatchdogTime)
 					state.ActiveStatus = true
+					newStateCh <- state
+
 				default:
 					state.CurrentBehaviour = Idle
+					newStateCh <- state
 				}
 			default:
 				panic("Invalid state: Door open with no orders")
 			}
-			newStateCh <- state
 
 		case state.CurrentFloor = <-floorEnteredCh:
 			state.ActiveStatus = true
@@ -128,20 +132,21 @@ func Elevator(
 					doorOpenCh <- true
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 					state.CurrentBehaviour = DoorOpen
-					motorTimer.Stop()
+					newStateCh <- state
 
 				case orders.orderAtCurrentFloorOppositeDirection(state.CurrentFloor, state.Direction):
 					doorOpenCh <- true
 					state.Direction = state.Direction.Opposite()
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 					state.CurrentBehaviour = DoorOpen
-					motorTimer.Stop()
+					newStateCh <- state
 
 				case orders.orderInDirection(state.CurrentFloor, state.Direction):
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					state.CurrentBehaviour = Moving
 					state.ActiveStatus = true
 					motorTimer.Reset(config.WatchdogTime)
+					newStateCh <- state
 
 				case orders.orderOppositeDirection(state.CurrentFloor, state.Direction):
 					state.Direction = state.Direction.Opposite()
@@ -149,6 +154,7 @@ func Elevator(
 					state.CurrentBehaviour = Moving
 					state.ActiveStatus = true
 					motorTimer.Reset(config.WatchdogTime)
+					newStateCh <- state
 				}
 
 			case DoorOpen:
@@ -159,9 +165,7 @@ func Elevator(
 			case Moving:
 
 			default:
-				panic("Invalid state: New order received while moving")
 			}
-			newStateCh <- state
 		}
 	}
 }
