@@ -29,9 +29,9 @@ type CommonState struct {
 	LocalStates    [config.NumElevators]LocalState
 }
 
-func (commonState *Commonstate) addOrder(newOrder elevio.ButtonEvent, id int) {
+func (commonState *CommonState) addOrder(newOrder elevio.ButtonEvent, id int) {
 	if newOrder.Button == elevio.BT_Cab {
-		commonState.States[id].CabRequests[newOrder.Floor] = true
+		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	} else {
 		commonState.HallRequests[newOrder.Floor][newOrder.Button] = true
 	}
@@ -39,22 +39,22 @@ func (commonState *Commonstate) addOrder(newOrder elevio.ButtonEvent, id int) {
 
 func (commonState *CommonState) addCabCall(newOrder elevio.ButtonEvent, id int) {
 	if newOrder.Button == elevio.BT_Cab {
-		commonState.States[id].CabRequests[newOrder.Floor] = true
+		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	}
 }
 
 func (commonState *CommonState) removerOrder(deliveredOrder elevio.ButtonEvent, id int) {
 	if deliveredOrder.Button == elevio.BT_Cab {
-		commonState.States[id].CabRequests[deliveredOrder.Floor] = false
+		commonState.LocalStates[id].CabRequests[deliveredOrder.Floor] = false
 	} else {
 		commonState.HallRequests[deliveredOrder.Floor][deliveredOrder.Button] = false
 	}
 }
 
 func (commonState *CommonState) updateState(newState elevator.State, id int) {
-	commonState.States[id] = LocalState{
+	commonState.LocalStates[id] = LocalState{
 		State:       newState,
-		CabRequests: commonState.States[id].CabRequests,
+		CabRequests: commonState.LocalStates[id].CabRequests,
 	}
 }
 
