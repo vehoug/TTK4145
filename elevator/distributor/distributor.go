@@ -44,6 +44,8 @@ func Distributor(
 	var newState       elevator.State
 	var peersStatus    peers.PeerUpdate
 
+	commonState.LocalStates[id].State.ActiveStatus = true
+
 	idle    := true
 	offline := false
 
@@ -56,6 +58,7 @@ func Distributor(
 		case <-disconnectTimer.C:
 			commonState.makeOthersUnavailable(id)
 			offline = true
+			idle = false
 			fmt.Printf("Node [%d]: lost network connection", id)
 		
 		case peersStatus = <-peerUpdateCh:
@@ -169,23 +172,22 @@ func Distributor(
 						syncedCommonStateCh <- commonState
 
 						if len(pendingQueue) > 0 {
+							op := pendingQueue[0]
+							pendingQueue = pendingQueue[1:]
 							commonState.prepNewCommonState(id)
 							
-							for _, op := range pendingQueue {
-								switch op.Type {
-								case AddOrder:
-									commonState.addOrder(op.Order, id)
+							switch op.Type {
+							case AddOrder:
+								commonState.addOrder(op.Order, id)
 
-								case RemoveOrder:
-									commonState.removeOrder(op.Order, id)
+							case RemoveOrder:
+								commonState.removeOrder(op.Order, id)
 
-								case StateUpdate:
-									commonState.updateState(op.State, id)
+							case StateUpdate:
+								commonState.updateState(op.State, id)
 
-								}
 							}
 							commonState.PeerSyncStatus[id] = Synced
-							pendingQueue = pendingQueue[:0]
 
 						} else {
 							idle = true

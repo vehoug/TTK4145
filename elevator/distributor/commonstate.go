@@ -6,6 +6,7 @@ import (
 	"elevator/elevio"
 	"elevator/network/peers"
 	"reflect"
+	"strconv"
 )
 
 type SyncStatus int
@@ -77,7 +78,8 @@ func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
 }
 
 func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
-	for id, _ := range peers.Lost {
+	for _, idStr := range peers.Lost {
+		id, _ := strconv.Atoi(idStr)
 		commonState.PeerSyncStatus[id] = Unavailable
 	}
 }
@@ -102,9 +104,9 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 
 func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	if commonState.Version != otherCommonState.Version {
-		return commonState.Version < otherCommonState.Version
+		return commonState.Version > otherCommonState.Version
 	}
-	return commonState.UpdaterID < otherCommonState.UpdaterID
+	return commonState.UpdaterID > otherCommonState.UpdaterID
 }
 
 func (commonState *CommonState) applyTransaction(mutation func(), id int) {
@@ -114,5 +116,5 @@ func (commonState *CommonState) applyTransaction(mutation func(), id int) {
 }
 
 func (commonState CommonState) isOlderThan(otherCommonState CommonState) bool {
-	return commonState.Version > otherCommonState.Version
+	return commonState.Version < otherCommonState.Version
 }
