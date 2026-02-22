@@ -77,7 +77,7 @@ func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
 }
 
 func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
-	for _, id := range peers.Lost {
+	for id, _ := range peers.Lost {
 		commonState.PeerSyncStatus[id] = Unavailable
 	}
 }
