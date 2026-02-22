@@ -10,6 +10,7 @@ import (
 	"elevator/network/bcast"
 	"elevator/network/peers"
 	"flag"
+	"fmt"
 	"strconv"
 )
 
@@ -58,6 +59,7 @@ func main() {
 	for {
 		select {
 		case commonState := <-syncedCommonStateCh:
+			fmt.Printf("Common state: %+v\n", commonState)
 			newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
 			lights.SetLights(commonState, id)
 		
