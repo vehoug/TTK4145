@@ -16,6 +16,9 @@ iso_now() {
 START_TS="$(iso_now)"
 declare -a PIDS=()
 MANUAL_WAIT_SECONDS="${MANUAL_WAIT_SECONDS:-10}"
+SIM0_INTERACTIVE="${SIM0_INTERACTIVE:-1}"
+SIM0_TERMINAL="${SIM0_TERMINAL:-auto}"
+SIM0_STARTED_INTERACTIVE="false"
 
 BASELINE_SECONDS="${BASELINE_SECONDS:-20}"
 MODERATE_SECONDS="${MODERATE_SECONDS:-20}"
@@ -37,6 +40,69 @@ require_cmd() {
     fi
 }
 
+start_sim0_interactive() {
+    if [[ "$SIM0_INTERACTIVE" != "1" ]]; then
+        return 1
+    fi
+
+    if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+        log "No GUI display detected; cannot open interactive simulator window for port 15657."
+        return 1
+    fi
+
+    local preferred=""
+    case "$SIM0_TERMINAL" in
+        auto)
+            if command -v gnome-terminal >/dev/null 2>&1; then
+                preferred="gnome-terminal"
+            elif command -v xterm >/dev/null 2>&1; then
+                preferred="xterm"
+            fi
+            ;;
+        gnome-terminal|xterm)
+            preferred="$SIM0_TERMINAL"
+            ;;
+        none)
+            return 1
+            ;;
+        *)
+            log "Unknown SIM0_TERMINAL='$SIM0_TERMINAL'; falling back to non-interactive mode."
+            return 1
+            ;;
+    esac
+
+    if [[ -z "$preferred" ]]; then
+        log "No supported terminal emulator found (gnome-terminal/xterm); falling back to non-interactive mode."
+        return 1
+    fi
+
+    local sim_cmd
+    sim_cmd="stdbuf -oL -eL '$SIM_BIN' --port 15657 2>&1 | tee -a '$RUN/sim0.log'"
+
+    if [[ "$preferred" == "gnome-terminal" ]]; then
+        gnome-terminal --title="SimElevatorServer 15657" -- bash -lc "$sim_cmd"
+    else
+        xterm -T "SimElevatorServer 15657" -e bash -lc "$sim_cmd" &
+    fi
+
+    SIM0_STARTED_INTERACTIVE="true"
+    log "Started interactive simulator on port 15657 in $preferred."
+    sleep 1
+    return 0
+}
+
+stop_sim0_interactive() {
+    if [[ "$SIM0_STARTED_INTERACTIVE" != "true" ]]; then
+        return
+    fi
+
+    local sim0_pids
+    sim0_pids="$(pgrep -f "$SIM_BIN --port 15657" || true)"
+    if [[ -n "$sim0_pids" ]]; then
+        kill $sim0_pids >/dev/null 2>&1 || true
+    fi
+}
+
 cleanup() {
     local exit_code="$1"
     set +e
@@ -51,6 +117,8 @@ cleanup() {
     for pid in "${PIDS[@]:-}"; do
         wait "$pid" >/dev/null 2>&1 || true
     done
+
+    stop_sim0_interactive
 
     log "Cleanup finished. Artifacts in: $RUN"
     exit "$exit_code"
@@ -114,7 +182,10 @@ packetloss_apply() {
 
 start_processes() {
     log "Starting simulator processes"
-    stdbuf -oL -eL "$SIM_BIN" --port 15657 > "$RUN/sim0.log" 2>&1 & PIDS+=("$!")
+    if ! start_sim0_interactive; then
+        log "Starting simulator on port 15657 in background (non-interactive)."
+        stdbuf -oL -eL "$SIM_BIN" --port 15657 > "$RUN/sim0.log" 2>&1 & PIDS+=("$!")
+    fi
     stdbuf -oL -eL "$SIM_BIN" --port 15658 > "$RUN/sim1.log" 2>&1 & PIDS+=("$!")
     stdbuf -oL -eL "$SIM_BIN" --port 15659 > "$RUN/sim2.log" 2>&1 & PIDS+=("$!")
 
@@ -251,7 +322,12 @@ packetloss_flush
 sleep "$RECOVERY_SECONDS"
 
 log "Scenario 5/5: Watchdog on node0 simulator connection"
-log "Manual step required: place a cab order in simulator on port 15657 so node0 is moving."
+if [[ "$SIM0_STARTED_INTERACTIVE" == "true" ]]; then
+    log "Manual step required: in the simulator window for port 15657, place a cab order so node0 is moving."
+else
+    log "Manual step required: no interactive simulator window was opened."
+    log "Run with SIM0_INTERACTIVE=1 and a GUI terminal (gnome-terminal/xterm) for easier manual watchdog stimulus."
+fi
 if [[ -t 0 ]]; then
     read -r -p "Press Enter when node0 is moving (or Ctrl+C to abort): " _
 else

@@ -30,6 +30,20 @@ Optional output directory:
 RUN=artifacts/packetloss_custom ./simulator/run_packetloss_test.sh
 ```
 
+Force interactive simulator window for node 0 (recommended for watchdog step):
+
+```bash
+SIM0_INTERACTIVE=1 SIM0_TERMINAL=auto ./simulator/run_packetloss_test.sh
+```
+
+Select terminal emulator explicitly:
+
+```bash
+SIM0_INTERACTIVE=1 SIM0_TERMINAL=gnome-terminal ./simulator/run_packetloss_test.sh
+# or
+SIM0_INTERACTIVE=1 SIM0_TERMINAL=xterm ./simulator/run_packetloss_test.sh
+```
+
 ## Output
 
 Each run creates:
@@ -46,5 +60,6 @@ Each run creates:
 
 The script includes one manual step before the watchdog scenario:
 
-- place a cab order on simulator port `15657` so node 0 starts moving,
+- if an interactive window opened for port `15657`, focus that window and place a cab order so node 0 starts moving,
+- cab keys in `simulator.con`: `z` (floor 0), `x` (floor 1), `c` (floor 2), `v` (floor 3),
 - then press Enter in the terminal running the script.
