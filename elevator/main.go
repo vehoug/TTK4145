@@ -10,6 +10,7 @@ import (
 	"elevator/network/bcast"
 	"elevator/network/peers"
 	"flag"
+	"fmt"
 	"strconv"
 )
 
@@ -41,6 +42,8 @@ func main() {
 	go bcast.Receiver(config.BcastPortNumber, networkReceiveCh)
 	go bcast.Transmitter(config.BcastPortNumber, networkTransmitCh)
 
+	fmt.Printf("Node [%d]: starting elevator control system\n", id)
+
 	go distributor.Distributor(
 		networkReceiveCh,
 		peerUpdateCh,
@@ -50,14 +53,19 @@ func main() {
 		newStateCh,
 		id)
 	
+	fmt.Println("Started distributor FSM")
+	
 	go elevator.Elevator(
 		newOrderCh, 
 		newStateCh, 
 		deliverdOrderCh)
 	
+	fmt.Println("Started elevator FSM")
+	
 	for {
 		select {
 		case commonState := <-syncedCommonStateCh:
+			fmt.Printf("Common state: %+v\n", commonState)
 			newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
 			lights.SetLights(commonState, id)
 		
