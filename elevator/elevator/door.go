@@ -3,6 +3,7 @@ package elevator
 import (
 	"elevator/config"
 	"elevator/elevio"
+	"fmt"
 	"time"
 )
 
@@ -10,7 +11,7 @@ type DoorState int
 
 const (
 	Closed DoorState = iota
-	Closing
+	OpenCountdown
 	Obstructed
 )
 
@@ -32,41 +33,42 @@ func Door(
 	for {
 		select {
 		case obstruction = <-obstructionPollCh:
-			if !obstruction && doorState == Obstructed {
-				elevio.SetDoorOpenLamp(false)
-				doorClosedCh <- true
-				doorState = Closed
-			}
+			obstructionCh <- obstruction
 			if obstruction {
-				obstructionCh <- true
+				if doorState == OpenCountdown {
+					doorTimer.Reset(config.DoorOpenDuration)
+					doorState = Obstructed
+				}
 			} else {
-				obstructionCh <- false
+				if doorState == Obstructed {
+					doorTimer.Reset(config.DoorOpenDuration)
+					doorState = OpenCountdown
+				}
 			}
 
 		case <-doorOpenCh:
-			if obstruction {
-				obstructionCh <- true
-			}
 			switch doorState {
 			case Closed:
 				elevio.SetDoorOpenLamp(true)
 				doorTimer.Reset(config.DoorOpenDuration)
-				doorState = Closing
+				doorState = OpenCountdown
 
-			case Closing:
+			case OpenCountdown:
 				doorTimer.Reset(config.DoorOpenDuration)
 
 			case Obstructed:
 				doorTimer.Reset(config.DoorOpenDuration)
-				doorState = Closing
+				doorState = OpenCountdown
 
 			default:
 				panic("Door state not implemented")
 
 			}
 		case <-doorTimer.C:
-			if doorState != Closing {
-				panic("Door state not implemented")
+			if doorState != OpenCountdown || obstruction {
+				fmt.Printf("Door timer fired in state=%d obstruction=%v\n", doorState, obstruction)
+				continue
+				//panic("Door state not implemented")
 			} else {
 				elevio.SetDoorOpenLamp(false)
 				doorClosedCh <- true
