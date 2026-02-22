@@ -16,29 +16,27 @@ func Elevator(
 		doorOpenCh      = make(chan bool, config.ChannelBufferSize)
 		doorClosedCh    = make(chan bool, config.ChannelBufferSize)
 		obstructionCh   = make(chan bool, config.ChannelBufferSize)
-		motorInactiveCh = make(chan bool, config.ChannelBufferSize)
+		motorInactiveCh <-chan time.Time
 		orders          Orders
 	)
 
 	go Door(doorClosedCh, doorOpenCh, obstructionCh)
 	go elevio.PollFloorSensor(floorEnteredCh)
 
+	motorTimer := time.NewTimer(config.WatchdogTime)
+
 	elevio.SetMotorDirection(elevio.MD_Down)
+	motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
+
 	state := initState()
 
-	motorTimer := time.NewTimer(config.WatchdogTime)
-	motorTimer.Stop()
 	for {
 		select {
-		case <-motorTimer.C:
-			if state.ActiveStatus {
+		case <-motorInactiveCh:
+			if state.ActiveStatus && state.CurrentBehaviour == Moving {
 				state.ActiveStatus = false
 				newStateCh <- state
-			}
-		case status := <-motorInactiveCh:
-			if !state.ActiveStatus {
-				state.ActiveStatus = status
-				newStateCh <- state
+				motorInactiveCh = stopMotorTimer(motorTimer)
 			}
 		case obstructed := <-obstructionCh:
 			if obstructed != state.Obstructed {
@@ -53,7 +51,7 @@ func Elevator(
 				case orders.orderInDirection(state.CurrentFloor, state.Direction):
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					state.CurrentBehaviour = Moving
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 					state.ActiveStatus = true
 					newStateCh <- state
 
@@ -67,7 +65,7 @@ func Elevator(
 					state.Direction = state.Direction.Opposite()
 					state.CurrentBehaviour = Moving
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 					state.ActiveStatus = true
 					newStateCh <- state
 
@@ -81,7 +79,7 @@ func Elevator(
 
 		case state.CurrentFloor = <-floorEnteredCh:
 			state.ActiveStatus = true
-			motorTimer.Stop()
+			motorInactiveCh = stopMotorTimer(motorTimer)
 			elevio.SetFloorIndicator(state.CurrentFloor)
 			switch state.CurrentBehaviour {
 			case Moving:
@@ -100,7 +98,7 @@ func Elevator(
 
 				case orders.orderInDirection(state.CurrentFloor, state.Direction):
 					state.ActiveStatus = true
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 
 				case orders.orderAtCurrentFloorOppositeDirection(state.CurrentFloor, state.Direction):
 					elevio.SetMotorDirection(elevio.MD_Stop)
@@ -113,7 +111,7 @@ func Elevator(
 					state.Direction = state.Direction.Opposite()
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					state.ActiveStatus = true
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 
 				default:
 					state.CurrentBehaviour = Idle
@@ -145,7 +143,7 @@ func Elevator(
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					state.CurrentBehaviour = Moving
 					state.ActiveStatus = true
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 					newStateCh <- state
 
 				case orders.orderOppositeDirection(state.CurrentFloor, state.Direction):
@@ -153,7 +151,7 @@ func Elevator(
 					elevio.SetMotorDirection(state.Direction.buttonToDirection())
 					state.CurrentBehaviour = Moving
 					state.ActiveStatus = true
-					motorTimer.Reset(config.WatchdogTime)
+					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 					newStateCh <- state
 				}
 
