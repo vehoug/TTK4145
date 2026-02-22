@@ -5,7 +5,7 @@ import (
 	"elevator/elevio"
 )
 
-func (order Orders) OrderInDirection(floor int, dir Direction) bool {
+func (order Orders) orderInDirection(floor int, dir Direction) bool {
 	switch dir {
 	case Up:
 		for f := floor + 1; f < config.NumFloors; f++ {
@@ -30,7 +30,7 @@ func (order Orders) OrderInDirection(floor int, dir Direction) bool {
 	}
 }
 
-func (order Orders) ReportCompletedOrder(floor int, dir Direction, orderDoneC chan<- elevio.ButtonEvent) {
+func (order Orders) reportCompletedOrder(floor int, dir Direction, orderDoneC chan<- elevio.ButtonEvent) {
 	if order[floor][elevio.BT_Cab] {
 		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
@@ -38,19 +38,21 @@ func (order Orders) ReportCompletedOrder(floor int, dir Direction, orderDoneC ch
 		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: dir.directionToButton()}
 	}
 }
-func (order Orders) OrderAtCurrentFloorOppositeDirection(floor int, dir Direction) bool {
+func (order Orders) orderAtCurrentFloorOppositeDirection(floor int, dir Direction) bool {
 	return order[floor][dir.Opposite()]
 }
-func (order Orders) OrderOppositeDirection(floor int, dir Direction) bool {
-	return order.OrderInDirection(floor, dir.Opposite())
+
+func (order Orders) orderOppositeDirection(floor int, dir Direction) bool {
+	return order.orderInDirection(floor, dir.Opposite())
 }
-func (order Orders) OrderAtCurrentFloorSameDirection(floor int, dir Direction) bool {
+
+func (order Orders) orderAtCurrentFloorSameDirection(floor int, dir Direction) bool {
 	return order[floor][dir]
 }
 
-func (order Orders) ShouldStopForCabOrder(floor int, dir Direction) bool {
+func (order Orders) shouldStopForCabOrder(floor int, dir Direction) bool {
 	if !order[floor][elevio.BT_Cab] {
 		return false
 	}
-	return order.OrderInDirection(floor, dir) || !order.OrderAtCurrentFloorOppositeDirection(floor, dir)
+	return order.orderInDirection(floor, dir) || !order.orderAtCurrentFloorOppositeDirection(floor, dir)
 }
