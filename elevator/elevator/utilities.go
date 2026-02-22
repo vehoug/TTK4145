@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"elevator/config"
+<<<<<<< Updated upstream
 )
 
 type State struct {
@@ -10,6 +11,17 @@ type State struct {
 	CurrrentBehaviour CurrentBehaviour
 	CurrentFloor      int
 	Direction         Direction
+=======
+	"time"
+)
+
+type State struct {
+	Obstructed       bool
+	ActiveStatus     bool
+	CurrentBehaviour CurrentBehaviour
+	CurrentFloor     int
+	Direction        Direction
+>>>>>>> Stashed changes
 }
 
 type CurrentBehaviour int
@@ -37,3 +49,16 @@ func initState() State {
 		ActiveStatus:     true,
 	}
 }
+<<<<<<< Updated upstream
+=======
+
+func startMotorTimer(motorTimer *time.Timer, timeout time.Duration) <-chan time.Time {
+	motorTimer.Reset(timeout)
+	return motorTimer.C
+}
+
+func stopMotorTimer(motorTimer *time.Timer) <-chan time.Time {
+	motorTimer.Stop()
+	return nil
+}
+>>>>>>> Stashed changes
