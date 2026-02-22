@@ -1,5 +1,7 @@
 package elevator
 
+import "elevator/elevio"
+
 func (d Direction) buttonToDirection() elevio.MotorDirection {
 	return map[Direction]elevio.MotorDirection{Up: elevio.MD_Up, Down: elevio.MD_Down}[d]
 }

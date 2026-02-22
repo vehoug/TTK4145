@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"elevator/config"
+	"elevator/elevio"
 	"time"
 )
 
@@ -11,10 +12,10 @@ func Elevator(
 	deliveredOrderCh chan<- elevio.ButtonEvent,
 ) {
 	var (
-		floorEnteredCh  = make(chan int, ChannelBufferSize)
-		doorOpenCh      = make(chan bool, ChannelBufferSize)
-		doorClosedCh    = make(chan bool, ChannelBufferSize)
-		obstructionCh   = make(chan bool, ChannelBufferSize)
+		floorEnteredCh  = make(chan int, config.ChannelBufferSize)
+		doorOpenCh      = make(chan bool, config.ChannelBufferSize)
+		doorClosedCh    = make(chan bool, config.ChannelBufferSize)
+		obstructionCh   = make(chan bool, config.ChannelBufferSize)
 		motorInactiveCh <-chan time.Time
 		orders          Orders
 	)
