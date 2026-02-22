@@ -181,7 +181,7 @@ func Distributor(
 					}
 				
 				case newOrder = <-newOrderCh:
-					if !commonState.LocalStates[id].State.Motorstop {
+					if commonState.LocalStates[id].State.ActiveStatus {
 						commonState.PeerSyncStatus[id] = Synced
 						commonState.addOrder(newOrder, id)
 						syncedCommonStateCh <- commonState
@@ -193,7 +193,7 @@ func Distributor(
 					syncedCommonStateCh <- commonState
 				
 				case newState = <-newStateCh:
-					if !(newState.Motorstop || newState.Obstructed) {
+					if newState.ActiveStatus && !newState.Obstructed {
 						commonState.PeerSyncStatus[id] = Synced
 						commonState.updateState(newState, id)
 						syncedCommonStateCh <- commonState
