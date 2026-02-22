@@ -17,7 +17,7 @@ const (
 func Door(
 	doorClosedCh chan<- bool,
 	doorOpenCh <-chan bool,
-	obtructionCh chan<- bool,
+	obstructionCh chan<- bool,
 ) {
 
 	elevio.SetDoorOpenLamp(false)
@@ -26,8 +26,8 @@ func Door(
 
 	obstruction := false
 	doorState := Closed
-	timeCounter := time.NewTimer(time.Hour)
-	timeCounter.Stop()
+	doorTimer := time.NewTimer(time.Hour)
+	doorTimer.Stop()
 
 	for {
 		select {
@@ -50,21 +50,21 @@ func Door(
 			switch doorState {
 			case Closed:
 				elevio.SetDoorOpenLamp(true)
-				timeCounter = time.NewTimer(config.DoorOpenDuration)
+				doorTimer.Reset(config.DoorOpenDuration)
 				doorState = Closing
 
 			case Closing:
-				timeCounter = time.NewTimer(config.DoorOpenDuration)
+				doorTimer.Reset(config.DoorOpenDuration)
 
 			case Obstructed:
-				timeCounter = time.NewTimer(config.DoorOpenDuration)
+				doorTimer.Reset(config.DoorOpenDuration)
 				doorState = Closing
 
 			default:
 				panic("Door state not implemented")
 
 			}
-		case <-timeCounter.C:
+		case <-doorTimer.C:
 			if doorState != Closing {
 				panic("Door state not implemented")
 			} else {
