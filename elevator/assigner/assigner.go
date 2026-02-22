@@ -39,6 +39,10 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevato
 		}
 	}
 
+	if len(stateMap) == 0 {
+		return elevator.Orders{}
+	}
+
 	hraInput := HRAInput{commonState.HallRequests, stateMap}
 
 	hraExecutable := ""
