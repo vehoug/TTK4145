@@ -1,0 +1,111 @@
+[2026-02-22T16:29:00+0100] Compiling packetloss helper from /home/gard/Documents/Sanntid/Heisen/TTK4145/simulator/packetloss.d
+[2026-02-22T16:29:03+0100] Packet-loss integration test started
+[2026-02-22T16:29:03+0100] Starting simulator processes
+[2026-02-22T16:29:03+0100] Starting elevator nodes
+[2026-02-22T16:29:03+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:29:03+0100] Settling period before scenarios (8s)
+[2026-02-22T16:29:11+0100] Scenario 1/5: Baseline (20s)
+[2026-02-22T16:29:11+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:29:31+0100] Scenario 2/5: Moderate network loss (20s)
+[2026-02-22T16:29:31+0100] Applying packet loss: ports=58735,58750 rate=0.25
+Flushing iptables chains...
+Performing command:
+  iptables -A INPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A INPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  
+[2026-02-22T16:29:51+0100] Scenario 3/5: Full network partition (10s)
+[2026-02-22T16:29:51+0100] Applying packet loss: ports=58735,58750 rate=1.0
+Flushing iptables chains...
+Performing command:
+  iptables -A INPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A INPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  
+[2026-02-22T16:30:02+0100] Scenario 4/5: Recovery (15s)
+[2026-02-22T16:30:02+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:30:17+0100] Scenario 5/5: Watchdog on node0 simulator connection
+[2026-02-22T16:30:17+0100] Manual step required: place a cab order in simulator on port 15657 so node0 is moving.
+[2026-02-22T16:34:16+0100] Cleanup finished. Artifacts in: /home/gard/Documents/Sanntid/Heisen/TTK4145/artifacts/packetloss_20260222_162900

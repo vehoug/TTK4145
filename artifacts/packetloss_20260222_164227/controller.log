@@ -1,0 +1,156 @@
+[2026-02-22T16:42:27+0100] Packet-loss integration test started
+[2026-02-22T16:42:27+0100] Starting simulator processes
+[2026-02-22T16:42:27+0100] Started interactive simulator on port 15657 in gnome-terminal.
+[2026-02-22T16:42:28+0100] Starting elevator nodes
+[2026-02-22T16:42:28+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:42:28+0100] Settling period before scenarios (8s)
+[2026-02-22T16:42:36+0100] Scenario 1/5: Baseline (20s)
+[2026-02-22T16:42:36+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:42:56+0100] Scenario 2/5: Moderate network loss (20s)
+[2026-02-22T16:42:56+0100] Applying packet loss: ports=58735,58750 rate=0.25
+Flushing iptables chains...
+Performing command:
+  iptables -A INPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A INPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 0.250000 -j DROP
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 0.25000000000
+  
+[2026-02-22T16:43:16+0100] Scenario 3/5: Full network partition (10s)
+[2026-02-22T16:43:16+0100] Applying packet loss: ports=58735,58750 rate=1.0
+Flushing iptables chains...
+Performing command:
+  iptables -A INPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A INPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p udp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p tcp -m multiport --destination-ports 58735,58750 -m statistic --mode random --probability 1.000000 -j DROP
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 58735,58750 statistic mode random probability 1.00000000000
+  
+[2026-02-22T16:43:26+0100] Scenario 4/5: Recovery (15s)
+[2026-02-22T16:43:26+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:43:41+0100] Scenario 5/5: Watchdog on node0 simulator connection
+[2026-02-22T16:43:41+0100] Manual step required: in the simulator window for port 15657, place a cab order so node0 is moving.
+[2026-02-22T16:43:56+0100] Applying packet loss: ports=15657 rate=1.0
+Flushing iptables chains...
+Performing command:
+  iptables -A INPUT -p udp -m multiport --destination-ports 15657 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A INPUT -p tcp -m multiport --destination-ports 15657 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p udp -m multiport --destination-ports 15657 -m statistic --mode random --probability 1.000000 -j DROP
+Performing command:
+  iptables -A OUTPUT -p tcp -m multiport --destination-ports 15657 -m statistic --mode random --probability 1.000000 -j DROP
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 15657 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 15657 statistic mode random probability 1.00000000000
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  DROP       udp  --  anywhere             anywhere             multiport dports 15657 statistic mode random probability 1.00000000000
+  DROP       tcp  --  anywhere             anywhere             multiport dports 15657 statistic mode random probability 1.00000000000
+  
+[2026-02-22T16:44:04+0100] Flushing packet loss rules
+Flushing iptables chains...
+
+
+Result of 'iptables -L':
+
+  Chain INPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain FORWARD (policy ACCEPT)
+  target     prot opt source               destination         
+  
+  Chain OUTPUT (policy ACCEPT)
+  target     prot opt source               destination         
+  
+[2026-02-22T16:44:19+0100] Extracting key events
+[2026-02-22T16:44:20+0100] Report written to /home/gard/Documents/Sanntid/Heisen/TTK4145/artifacts/packetloss_20260222_164227/report.md
+[2026-02-22T16:44:20+0100] Test run complete
+[2026-02-22T16:44:20+0100] Cleanup finished. Artifacts in: /home/gard/Documents/Sanntid/Heisen/TTK4145/artifacts/packetloss_20260222_164227

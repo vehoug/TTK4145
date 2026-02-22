@@ -1,0 +1,6 @@
+Node [0]: starting elevator control system
+Started distributor FSM
+Started elevator FSM
+Common state: {Version:0 UpdaterID:0 PeerSyncStatus:[0 0 0] HallRequests:[[false false] [false false] [false false] [false false]] LocalStates:[{State:{Obstructed:false ActiveStatus:true CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]}]}
+Node [0]: lost network connectionNode [0]: reconnected to networkCommon state: {Version:1 UpdaterID:0 PeerSyncStatus:[0 2 2] HallRequests:[[false false] [false false] [false false] [false false]] LocalStates:[{State:{Obstructed:false ActiveStatus:true CurrentBehaviour:0 CurrentFloor:0 Direction:1} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]}]}
+signal: interrupt

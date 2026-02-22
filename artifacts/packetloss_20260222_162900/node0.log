@@ -1,0 +1,17 @@
+Node [0]: starting elevator control system
+Started distributor FSM
+Started elevator FSM
+Common state: {Version:0 UpdaterID:0 PeerSyncStatus:[0 0 0] HallRequests:[[false false] [false false] [false false] [false false]] LocalStates:[{State:{Obstructed:false ActiveStatus:true CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]}]}
+Node [0]: lost network connectionNode [0]: reconnected to networkCommon state: {Version:1 UpdaterID:0 PeerSyncStatus:[0 2 2] HallRequests:[[false false] [false false] [false false] [false false]] LocalStates:[{State:{Obstructed:false ActiveStatus:true CurrentBehaviour:0 CurrentFloor:2 Direction:1} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]} {State:{Obstructed:false ActiveStatus:false CurrentBehaviour:0 CurrentFloor:0 Direction:0} CabRequests:[false false false false]}]}
+panic: Lost connection to Elevator Server
+
+goroutine 50 [running]:
+elevator/elevio.read({0x9, 0x0, 0x0, 0x0})
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/elevio/elevio.go:169 +0x127
+elevator/elevio.GetObstruction()
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/elevio/elevio.go:153 +0x1a
+elevator/elevio.PollObstructionSwitch(0xc000386000)
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/elevio/elevio.go:125 +0x2c
+created by elevator/elevator.Door in goroutine 34
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/elevator/door.go:26 +0x96
+exit status 2

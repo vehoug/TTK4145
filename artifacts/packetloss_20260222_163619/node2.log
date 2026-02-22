@@ -1,0 +1,8 @@
+panic: dial tcp 127.0.0.1:15659: connect: connection refused
+
+goroutine 1 [running]:
+elevator/elevio.Init({0xc0000141a0?, 0x590ba3?}, 0x2?)
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/elevio/elevio.go:56 +0xe5
+main.main()
+	/home/gard/Documents/Sanntid/Heisen/TTK4145/elevator/main.go:28 +0x116
+exit status 2

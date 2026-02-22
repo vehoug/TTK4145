@@ -1,0 +1,6 @@
+[2026-02-22T16:42:04+0100] Packet-loss integration test started
+[2026-02-22T16:42:04+0100] Port 15657 is already in use:
+SimElevat 37248 gard    3u  IPv4 151548      0t0  TCP *:15657 (LISTEN)
+[2026-02-22T16:42:04+0100] Please stop existing simulator instances and retry.
+[2026-02-22T16:42:04+0100] Tip: pkill -f 'SimElevatorServer --port 1565[7-9]'
+[2026-02-22T16:42:04+0100] Cleanup finished. Artifacts in: /home/gard/Documents/Sanntid/Heisen/TTK4145/artifacts/packetloss_20260222_164204

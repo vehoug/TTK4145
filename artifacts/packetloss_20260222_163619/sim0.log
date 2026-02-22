@@ -1,0 +1,24 @@
+Encountered a problem when loading simulator.con: simulator.con: No such file or directory
+Using default settings...
+Parsing command line args...
+
+
+
+
+
+
+
+
+
+
+[6n[5;0f+-----------+-----------------+            
+|           |        #        |            
+| Floor     |  0*  1   2   3  |Disconnected
++-----------+-----------------+-----------+
+| Hall Up   |  -   -   -      | Door:   - |
+| Hall Down |      -   -   -  | Stop:   - |
+| Cab       |  -   -   -   -  | Obstr:  ^ |
++-----------+-----------------+----------1+
+std.socket.SocketOSException@std/socket.d(2777): Unable to bind socket: Address already in use
+core.exception.AssertError@src/sim_server.d(668): Child thread terminated, shutting down...
+std.concurrency.OwnerTerminated@std/concurrency.d(236): Owner terminated

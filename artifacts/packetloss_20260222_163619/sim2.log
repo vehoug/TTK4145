@@ -1,0 +1,14 @@
+Encountered a problem when loading simulator.con: simulator.con: No such file or directory
+Using default settings...
+Parsing command line args...
+
+
+
+
+
+
+
+
+
+
+[6ncore.exception.RangeError@src/sim_server.d(438): Range violation
