@@ -14,25 +14,24 @@ import (
 	"strconv"
 )
 
-var Port int
-var id int
-
 func main() {
-	port       := flag.Int("port", 15657, "Default port number")
-	elevatorID := flag.Int("id", 0, "Default elevator ID")
+	var port int
+	var id   int
+
+	flag.IntVar(&port, "port", config.DefaultPort, "Default elevator port number")
+	flag.IntVar(&id, "id", 0, "Default elevator ID")
 	flag.Parse()
 
-	id   = *elevatorID
-	Port = *port
-
-	elevio.Init("localhost:" + strconv.Itoa(Port), config.NumFloors)
+	elevio.Init(fmt.Sprintf("localhost:%d", port), config.NumFloors)
 
 	newOrderCh          := make(chan elevator.Orders, config.Buffer)
 	deliveredOrderCh    := make(chan elevio.ButtonEvent, config.Buffer)
 	newStateCh          := make(chan elevator.State, config.Buffer)
+
 	syncedCommonStateCh := make(chan distributor.CommonState, config.Buffer)
 	networkReceiveCh    := make(chan distributor.CommonState, config.Buffer)
 	networkTransmitCh   := make(chan distributor.CommonState, config.Buffer)
+
 	peerUpdateCh        := make(chan peers.PeerUpdate, config.Buffer)
 	peersTransmitCh     := make(chan bool, config.Buffer)
 
@@ -56,14 +55,12 @@ func main() {
 		newStateCh, 
 		deliveredOrderCh)
 	
-	for {
-		select {
-		case commonState := <-syncedCommonStateCh:
-			fmt.Printf("Common state: %+v\n", commonState)
-			newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
-			lights.SetLights(commonState, id)
-		
-		default:
-		}
-	}
+	fmt.Printf("Elevator Node [%d] initialized\n\tNumber of floors: %d\n\tNumber of elevators: %d\n", 
+			   id, config.NumFloors, config.NumElevators)
+	
+	for commonState := range syncedCommonStateCh {
+	
+		newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
+		lights.SetLights(commonState, id)
+    }
 }

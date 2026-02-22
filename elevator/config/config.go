@@ -6,12 +6,13 @@ import (
 
 const (
 	NumFloors         = 4
-	NumElevators      = 3
+	NumElevators      = 2
 	NumButtons        = 3
 	PeersPortNumber   = 58735
 	BcastPortNumber   = 58750
 	Buffer            = 1024
 	ChannelBufferSize = 16
+	DefaultPort       = 15657
 
 	DisconnectTime   = 1 * time.Second
 	DoorOpenDuration = 3 * time.Second

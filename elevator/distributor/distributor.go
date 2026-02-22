@@ -30,7 +30,7 @@ func Distributor(
 	syncedCommonStateCh chan<- CommonState,
 	networkTransmitCh   chan<- CommonState,
 	deliveredOrderCh    <-chan elevio.ButtonEvent,
-    newStateCh          <-chan elevator.State,
+	newStateCh          <-chan elevator.State,
 	id                  int,
 ) {
 	newOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
@@ -59,148 +59,139 @@ func Distributor(
 			commonState.makeOthersUnavailable(id)
 			offline = true
 			idle = false
-			fmt.Printf("Node [%d]: lost network connection", id)
-		
+			fmt.Printf("Node [%d]: lost network connection\n", id)
+
 		case peersStatus = <-peerUpdateCh:
 			commonState.makeOthersUnavailable(id)
 			idle = false
-		
+
 		case <-heartbeatTicker.C:
 			networkTransmitCh <- commonState
-		
-		default:
-		}
 
-		switch {
-		case idle:
-			select {
-			case newOrder = <-newOrderCh:
+		case newOrder = <-newOrderCh:
+			if offline {
+				if commonState.LocalStates[id].State.ActiveStatus {
+					commonState.PeerSyncStatus[id] = Synced
+					commonState.addOrder(newOrder, id)
+					syncedCommonStateCh <- commonState
+				}
+
+			} else if idle {
 				commonState.applyTransaction(func() {
 					commonState.addOrder(newOrder, id)
 				}, id)
 				idle = false
-			
-			case deliveredOrder = <-deliveredOrderCh:
+
+			} else {
+				pendingQueue = append(pendingQueue, PendingOperation{
+					Type:  AddOrder,
+					Order: newOrder,
+				})
+			}
+
+		case deliveredOrder = <-deliveredOrderCh:
+			if offline {
+				commonState.PeerSyncStatus[id] = Synced
+				commonState.removeOrder(deliveredOrder, id)
+				syncedCommonStateCh <- commonState
+
+			} else if idle {
 				commonState.applyTransaction(func() {
 					commonState.removeOrder(deliveredOrder, id)
 				}, id)
 				idle = false
-				
-			case newState = <-newStateCh:
+
+			} else {
+				pendingQueue = append(pendingQueue, PendingOperation{
+					Type:  RemoveOrder,
+					Order: deliveredOrder,
+				})
+			}
+
+		case newState = <-newStateCh:
+			if offline {
+				if newState.ActiveStatus && !newState.Obstructed {
+					commonState.PeerSyncStatus[id] = Synced
+					commonState.updateState(newState, id)
+					syncedCommonStateCh <- commonState
+				}
+
+			} else if idle {
 				commonState.applyTransaction(func() {
 					commonState.updateState(newState, id)
 				}, id)
 				idle = false
-			
-			case arrivedCommonState := <-networkReceiveCh:
+
+			} else {
+				pendingQueue = append(pendingQueue, PendingOperation{
+					Type:  StateUpdate,
+					State: newState,
+				})
+			}
+
+		case arrivedCommonState := <-networkReceiveCh:
+			if offline {
+				if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
+					offline = false
+					fmt.Printf("Node [%d]: reconnected to network\n", id)
+				} else {
+					commonState.PeerSyncStatus[id] = Unavailable
+				}
+
+			} else if idle {
 				disconnectTimer.Reset(config.DisconnectTime)
 				if arrivedCommonState.isNewerThan(commonState) {
+					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
 					commonState = arrivedCommonState
+					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
 					commonState.makeLostPeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 					idle = false
 				}
-			
-			default:
-			}
 
-		case offline:
-			select {
-				case <-networkReceiveCh:
-					if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
-						offline = false
-						fmt.Printf("Node [%d]: reconnected to network", id)
-					} else {
-						commonState.PeerSyncStatus[id] = Unavailable
-					}
-				
-				case newOrder = <-newOrderCh:
-					if commonState.LocalStates[id].State.ActiveStatus {
-						commonState.PeerSyncStatus[id] = Synced
-						commonState.addOrder(newOrder, id)
-						syncedCommonStateCh <- commonState
-					}
-				
-				case deliveredOrder = <-deliveredOrderCh:
+			} else {
+				if arrivedCommonState.isOlderThan(commonState) {
+					break
+				}
+
+				disconnectTimer.Reset(config.DisconnectTime)
+
+				switch {
+				case arrivedCommonState.isNewerThan(commonState):
+					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
+					commonState = arrivedCommonState
+					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
+					commonState.makeLostPeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
-					commonState.removeOrder(deliveredOrder, id)
+
+				case arrivedCommonState.fullySynced(id):
+					commonState = arrivedCommonState
 					syncedCommonStateCh <- commonState
-				
-				case newState = <-newStateCh:
-					if newState.ActiveStatus && !newState.Obstructed {
-						commonState.PeerSyncStatus[id] = Synced
-						commonState.updateState(newState, id)
-						syncedCommonStateCh <- commonState
-					}
-				default:
-			}
-		
-		case !idle:
-			select {
-				case newOrder = <-newOrderCh:
-					pendingQueue = append(pendingQueue, PendingOperation{
-						Type:  AddOrder,
-						Order: newOrder,
-					})
-				
-				case deliveredOrder = <-deliveredOrderCh:
-					pendingQueue = append(pendingQueue, PendingOperation{
-						Type:  RemoveOrder,
-						Order: deliveredOrder,
-					})
-				
-				case newState = <-newStateCh:
-					pendingQueue = append(pendingQueue, PendingOperation{
-						Type:  StateUpdate,
-						State: newState,
-					})
 
-				case arrivedCommonState := <-networkReceiveCh:
-					if arrivedCommonState.isOlderThan(commonState) {
-						break
-					}
-					disconnectTimer.Reset(config.DisconnectTime)
+					if len(pendingQueue) > 0 {
+						op := pendingQueue[0]
+						pendingQueue = pendingQueue[1:]
+						commonState.prepNewCommonState(id)
 
-					switch {
-					case arrivedCommonState.isNewerThan(commonState):
-						commonState = arrivedCommonState
-						commonState.makeLostPeersUnavailable(peersStatus)
-						commonState.PeerSyncStatus[id] = Synced
-					
-					case arrivedCommonState.fullySynced(id):
-						commonState = arrivedCommonState
-						syncedCommonStateCh <- commonState
-
-						if len(pendingQueue) > 0 {
-							op := pendingQueue[0]
-							pendingQueue = pendingQueue[1:]
-							commonState.prepNewCommonState(id)
-							
-							switch op.Type {
-							case AddOrder:
-								commonState.addOrder(op.Order, id)
-
-							case RemoveOrder:
-								commonState.removeOrder(op.Order, id)
-
-							case StateUpdate:
-								commonState.updateState(op.State, id)
-
-							}
-							commonState.PeerSyncStatus[id] = Synced
-
-						} else {
-							idle = true
+						switch op.Type {
+						case AddOrder:
+							commonState.addOrder(op.Order, id)
+						case RemoveOrder:
+							commonState.removeOrder(op.Order, id)
+						case StateUpdate:
+							commonState.updateState(op.State, id)
 						}
-						
-					case commonState.equals(arrivedCommonState):
-						commonState = arrivedCommonState
-						commonState.makeLostPeersUnavailable(peersStatus)
 						commonState.PeerSyncStatus[id] = Synced
-					
-					default:
+
+					} else {
+						idle = true
 					}
-				default:
+
+				case commonState.equals(arrivedCommonState):
+					commonState = arrivedCommonState
+					commonState.makeLostPeersUnavailable(peersStatus)
+					commonState.PeerSyncStatus[id] = Synced
+				}
 			}
 		}
 	}
