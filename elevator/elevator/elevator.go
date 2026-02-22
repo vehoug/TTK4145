@@ -3,6 +3,7 @@ package elevator
 import (
 	"elevator/config"
 	"elevator/elevio"
+	"fmt"
 	"time"
 )
 
@@ -35,9 +36,11 @@ func Elevator(
 		case <-motorInactiveCh:
 			if state.ActiveStatus && state.CurrentBehaviour == Moving {
 				state.ActiveStatus = false
+				fmt.Printf("Motorpower lost")
 				newStateCh <- state
-				motorInactiveCh = stopMotorTimer(motorTimer)
 			}
+			motorInactiveCh = stopMotorTimer(motorTimer)
+
 		case obstructed := <-obstructionCh:
 			if obstructed != state.Obstructed {
 				state.Obstructed = obstructed
@@ -71,10 +74,11 @@ func Elevator(
 
 				default:
 					state.CurrentBehaviour = Idle
+					motorInactiveCh = stopMotorTimer(motorTimer)
 					newStateCh <- state
 				}
 			default:
-				panic("Invalid state: Door open with no orders")
+				fmt.Printf("Invalid state: Door open with no orders")
 			}
 
 		case state.CurrentFloor = <-floorEnteredCh:
@@ -118,7 +122,7 @@ func Elevator(
 					elevio.SetMotorDirection(elevio.MD_Stop)
 				}
 			default:
-				panic("Invalid state: Floor entered while not moving")
+				fmt.Printf("Invalid state: Floor entered while not moving")
 			}
 			newStateCh <- state
 
@@ -130,6 +134,7 @@ func Elevator(
 					doorOpenCh <- true
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 					state.CurrentBehaviour = DoorOpen
+					motorInactiveCh = stopMotorTimer(motorTimer)
 					newStateCh <- state
 
 				case orders.orderAtCurrentFloorOppositeDirection(state.CurrentFloor, state.Direction):
@@ -137,6 +142,7 @@ func Elevator(
 					state.Direction = state.Direction.Opposite()
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 					state.CurrentBehaviour = DoorOpen
+					motorInactiveCh = stopMotorTimer(motorTimer)
 					newStateCh <- state
 
 				case orders.orderInDirection(state.CurrentFloor, state.Direction):
