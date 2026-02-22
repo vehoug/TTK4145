@@ -28,7 +28,7 @@ func main() {
 	elevio.Init("localhost:" + strconv.Itoa(Port), config.NumFloors)
 
 	newOrderCh          := make(chan elevator.Orders, config.Buffer)
-	deliverdOrderCh     := make(chan elevio.ButtonEvent, config.Buffer)
+	deliveredOrderCh    := make(chan elevio.ButtonEvent, config.Buffer)
 	newStateCh          := make(chan elevator.State, config.Buffer)
 	syncedCommonStateCh := make(chan distributor.CommonState, config.Buffer)
 	networkReceiveCh    := make(chan distributor.CommonState, config.Buffer)
@@ -47,14 +47,14 @@ func main() {
 		peerUpdateCh,
 		syncedCommonStateCh,
 		networkTransmitCh,
-		deliverdOrderCh,
+		deliveredOrderCh,
 		newStateCh,
 		id)
 	
 	go elevator.Elevator(
 		newOrderCh, 
 		newStateCh, 
-		deliverdOrderCh)
+		deliveredOrderCh)
 	
 	for {
 		select {
@@ -64,7 +64,6 @@ func main() {
 			lights.SetLights(commonState, id)
 		
 		default:
-			continue
 		}
 	}
 }
