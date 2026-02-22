@@ -72,19 +72,19 @@ func Distributor(
 		case idle:
 			select {
 			case newOrder = <-newOrderCh:
-				applyTransaction(func() {
+				commonState.applyTransaction(func() {
 					commonState.addOrder(newOrder, id)
 				}, id)
 				idle = false
 			
 			case deliveredOrder = <-deliveredOrderCh:
-				applyTransaction(func() {
+				commonState.applyTransaction(func() {
 					commonState.removeOrder(deliveredOrder, id)
 				}, id)
 				idle = false
 				
 			case newState = <-newStateCh:
-				applyTransaction(func() {
+				commonState.applyTransaction(func() {
 					commonState.updateState(newState, id)
 				}, id)
 				idle = false

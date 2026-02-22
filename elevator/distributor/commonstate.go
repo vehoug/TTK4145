@@ -43,7 +43,7 @@ func (commonState *CommonState) addCabCall(newOrder elevio.ButtonEvent, id int) 
 	}
 }
 
-func (commonState *CommonState) removerOrder(deliveredOrder elevio.ButtonEvent, id int) {
+func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, id int) {
 	if deliveredOrder.Button == elevio.BT_Cab {
 		commonState.LocalStates[id].CabRequests[deliveredOrder.Floor] = false
 	} else {
