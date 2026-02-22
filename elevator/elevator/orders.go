@@ -3,6 +3,7 @@ package elevator
 import (
 	"elevator/config"
 	"elevator/elevio"
+	"fmt"
 )
 
 func (order Orders) orderInDirection(floor int, dir Direction) bool {
@@ -26,7 +27,8 @@ func (order Orders) orderInDirection(floor int, dir Direction) bool {
 		}
 		return false
 	default:
-		panic("Invalid direction")
+		fmt.Println("Invalid direction")
+		return false
 	}
 }
 
