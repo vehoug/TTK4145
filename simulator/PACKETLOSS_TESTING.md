@@ -63,3 +63,30 @@ The script includes one manual step before the watchdog scenario:
 - if an interactive window opened for port `15657`, focus that window and place a cab order so node 0 starts moving,
 - cab keys in `simulator.con`: `z` (floor 0), `x` (floor 1), `c` (floor 2), `v` (floor 3),
 - then press Enter in the terminal running the script.
+
+## Troubleshooting
+
+### Error: `Encountered a problem when loading simulator.con`
+
+This means simulator was started from the wrong working directory.
+`run_packetloss_test.sh` now starts simulator processes from `simulator/` automatically.
+
+### Error: `Unable to bind socket: Address already in use`
+
+A previous simulator is still running on one of the test ports.
+
+Check listeners:
+
+```bash
+lsof -nP -iTCP:15657 -sTCP:LISTEN
+lsof -nP -iTCP:15658 -sTCP:LISTEN
+lsof -nP -iTCP:15659 -sTCP:LISTEN
+```
+
+Kill stale simulator processes:
+
+```bash
+pkill -f "SimElevatorServer --port 15657"
+pkill -f "SimElevatorServer --port 15658"
+pkill -f "SimElevatorServer --port 15659"
+```

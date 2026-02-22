@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN="${RUN:-$ROOT_DIR/artifacts/packetloss_$(date +%Y%m%d_%H%M%S)}"
+SIM_DIR="$ROOT_DIR/simulator"
 SIM_BIN="$ROOT_DIR/simulator/SimElevatorServer"
 PACKETLOSS_SRC="$ROOT_DIR/simulator/packetloss.d"
 PACKETLOSS_BIN="$ROOT_DIR/simulator/packetloss"
@@ -36,6 +37,25 @@ require_cmd() {
     local cmd="$1"
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo "Missing required command: $cmd" >&2
+        exit 1
+    fi
+}
+
+ensure_ports_free() {
+    local busy=0
+    local port pid_info
+    for port in 15657 15658 15659; do
+        pid_info="$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | tail -n +2 || true)"
+        if [[ -n "$pid_info" ]]; then
+            log "Port $port is already in use:"
+            echo "$pid_info" | tee -a "$CONTROLLER_LOG"
+            busy=1
+        fi
+    done
+
+    if [[ "$busy" -ne 0 ]]; then
+        log "Please stop existing simulator instances and retry."
+        log "Tip: pkill -f 'SimElevatorServer --port 1565[7-9]'"
         exit 1
     fi
 }
@@ -77,7 +97,7 @@ start_sim0_interactive() {
     fi
 
     local sim_cmd
-    sim_cmd="stdbuf -oL -eL '$SIM_BIN' --port 15657 2>&1 | tee -a '$RUN/sim0.log'"
+    sim_cmd="cd '$SIM_DIR' && stdbuf -oL -eL './SimElevatorServer' --port 15657 2>&1 | tee -a '$RUN/sim0.log'"
 
     if [[ "$preferred" == "gnome-terminal" ]]; then
         gnome-terminal --title="SimElevatorServer 15657" -- bash -lc "$sim_cmd"
@@ -97,7 +117,7 @@ stop_sim0_interactive() {
     fi
 
     local sim0_pids
-    sim0_pids="$(pgrep -f "$SIM_BIN --port 15657" || true)"
+    sim0_pids="$(pgrep -f "SimElevatorServer --port 15657" || true)"
     if [[ -n "$sim0_pids" ]]; then
         kill $sim0_pids >/dev/null 2>&1 || true
     fi
@@ -146,9 +166,15 @@ require_cmd rg
 require_cmd iptables
 require_cmd stdbuf
 require_cmd git
+require_cmd lsof
 
 if [[ ! -x "$SIM_BIN" ]]; then
     echo "Simulator binary not found or not executable: $SIM_BIN" >&2
+    exit 1
+fi
+
+if [[ ! -f "$SIM_DIR/simulator.con" ]]; then
+    echo "Missing simulator configuration: $SIM_DIR/simulator.con" >&2
     exit 1
 fi
 
@@ -181,13 +207,15 @@ packetloss_apply() {
 }
 
 start_processes() {
+    ensure_ports_free
+
     log "Starting simulator processes"
     if ! start_sim0_interactive; then
         log "Starting simulator on port 15657 in background (non-interactive)."
-        stdbuf -oL -eL "$SIM_BIN" --port 15657 > "$RUN/sim0.log" 2>&1 & PIDS+=("$!")
+        stdbuf -oL -eL bash -lc "cd '$SIM_DIR' && ./SimElevatorServer --port 15657" > "$RUN/sim0.log" 2>&1 & PIDS+=("$!")
     fi
-    stdbuf -oL -eL "$SIM_BIN" --port 15658 > "$RUN/sim1.log" 2>&1 & PIDS+=("$!")
-    stdbuf -oL -eL "$SIM_BIN" --port 15659 > "$RUN/sim2.log" 2>&1 & PIDS+=("$!")
+    stdbuf -oL -eL bash -lc "cd '$SIM_DIR' && ./SimElevatorServer --port 15658" > "$RUN/sim1.log" 2>&1 & PIDS+=("$!")
+    stdbuf -oL -eL bash -lc "cd '$SIM_DIR' && ./SimElevatorServer --port 15659" > "$RUN/sim2.log" 2>&1 & PIDS+=("$!")
 
     log "Starting elevator nodes"
     stdbuf -oL -eL bash -lc "cd '$ELEVATOR_DIR' && go run . -id=0 -port=15657" > "$RUN/node0.log" 2>&1 & PIDS+=("$!")
