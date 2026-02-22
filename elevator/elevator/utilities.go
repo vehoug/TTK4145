@@ -48,3 +48,7 @@ func stopMotorTimer(motorTimer *time.Timer) <-chan time.Time {
 	motorTimer.Stop()
 	return nil
 }
+
+func (behaviour CurrentBehaviour) ToString() string {
+	return map[CurrentBehaviour]string{Idle: "idle", DoorOpen: "doorOpen", Moving: "moving"}[behaviour]
+}

@@ -27,12 +27,12 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevato
 
 	stateMap := make(map[string]HRAState)
 	for i, v := range commonState.LocalStates {
-		if commonState.PeerSyncStatus[i] == distributor.Unavailable || v.State.Motorstop || v.State.Obstructed {
+		if commonState.PeerSyncStatus[i] == distributor.Unavailable || !v.State.ActiveStatus || v.State.Obstructed {
 			continue
 		} else {
 			stateMap[strconv.Itoa(i)] = HRAState{
-				Behaviour:   v.State.Behaviour.ToString(),
-				Floor:       v.State.Floor,
+				Behaviour:   v.State.CurrentBehaviour.ToString(),
+				Floor:       v.State.CurrentFloor,
 				Direction:   v.State.Direction.ToString(),
 				CabRequests: v.CabRequests,
 			}
