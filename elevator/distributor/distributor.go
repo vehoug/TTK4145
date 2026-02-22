@@ -100,6 +100,37 @@ func Distributor(
 			
 			default:
 			}
+
+		case offline:
+			select {
+				case <-networkReceiveCh:
+					if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
+						offline = false
+						fmt.Printf("Node [%d]: reconnected to network", id)
+					} else {
+						commonState.PeerSyncStatus[id] = Unavailable
+					}
+				
+				case newOrder = <-newOrderCh:
+					if commonState.LocalStates[id].State.ActiveStatus {
+						commonState.PeerSyncStatus[id] = Synced
+						commonState.addOrder(newOrder, id)
+						syncedCommonStateCh <- commonState
+					}
+				
+				case deliveredOrder = <-deliveredOrderCh:
+					commonState.PeerSyncStatus[id] = Synced
+					commonState.removeOrder(deliveredOrder, id)
+					syncedCommonStateCh <- commonState
+				
+				case newState = <-newStateCh:
+					if newState.ActiveStatus && !newState.Obstructed {
+						commonState.PeerSyncStatus[id] = Synced
+						commonState.updateState(newState, id)
+						syncedCommonStateCh <- commonState
+					}
+				default:
+			}
 		
 		case !idle:
 			select {
@@ -166,37 +197,6 @@ func Distributor(
 						commonState.PeerSyncStatus[id] = Synced
 					
 					default:
-					}
-				default:
-			}
-
-		case offline:
-			select {
-				case <-networkReceiveCh:
-					if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
-						offline = false
-						fmt.Printf("Node [%d]: reconnected to network", id)
-					} else {
-						commonState.PeerSyncStatus[id] = Unavailable
-					}
-				
-				case newOrder = <-newOrderCh:
-					if commonState.LocalStates[id].State.ActiveStatus {
-						commonState.PeerSyncStatus[id] = Synced
-						commonState.addOrder(newOrder, id)
-						syncedCommonStateCh <- commonState
-					}
-				
-				case deliveredOrder = <-deliveredOrderCh:
-					commonState.PeerSyncStatus[id] = Synced
-					commonState.removeOrder(deliveredOrder, id)
-					syncedCommonStateCh <- commonState
-				
-				case newState = <-newStateCh:
-					if newState.ActiveStatus && !newState.Obstructed {
-						commonState.PeerSyncStatus[id] = Synced
-						commonState.updateState(newState, id)
-						syncedCommonStateCh <- commonState
 					}
 				default:
 			}
