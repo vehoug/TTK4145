@@ -1,10 +1,11 @@
 package distributor
 
 import (
+	"elevator/config"
+	"elevator/elevator"
+	"elevator/elevio"
 	"elevator/network/peers"
 	"reflect"
-
-	"elevator/config"
 )
 
 type SyncStatus int
@@ -32,7 +33,7 @@ func (commonState *Commonstate) addOrder(newOrder elevio.ButtonEvent, id int) {
 	if newOrder.Button == elevio.BT_Cab {
 		commonState.States[id].CabRequests[newOrder.Floor] = true
 	} else {
-		commonState.HallRequests[newOrder.floor][newOrder.Button] = true
+		commonState.HallRequests[newOrder.Floor][newOrder.Button] = true
 	}
 }
 
@@ -62,7 +63,7 @@ func (commonState *CommonState) fullySynced(id int) bool {
 		return false
 	}
 	for index := range commonState.PeerSyncStatus {
-		if commonState.PeerSyncStatus[id] == Pending {
+		if commonState.PeerSyncStatus[index] == Pending {
 			return false
 		}
 	}
