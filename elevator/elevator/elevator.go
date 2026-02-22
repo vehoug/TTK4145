@@ -40,7 +40,7 @@ func Elevator(
 				newStateCh <- state
 			}
 
-		case <-doorOpenCh:
+		case <-doorClosedCh:
 			switch state.CurrentBehaviour {
 			case DoorOpen:
 				switch {
@@ -144,11 +144,14 @@ func Elevator(
 					state.ActiveStatus = true
 					motorInactiveCh = startMotorTimer(motorTimer, config.WatchdogTime)
 				}
+
 			case DoorOpen:
 				if orders.OrderAtCurrentFloorSameDirection(state.CurrentFloor, state.Direction) || orders[state.CurrentFloor][elevio.BT_Cab] {
 					doorOpenCh <- true
 					orders.ReportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 				}
+			case Moving:
+
 			default:
 				panic("Invalid state: New order received while moving")
 			}

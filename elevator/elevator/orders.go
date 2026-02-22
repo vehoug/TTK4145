@@ -1,13 +1,10 @@
 package elevator
 
-<<<<<<< Updated upstream
-=======
 import (
 	"elevator/config"
 	"elevator/elevio"
 )
 
->>>>>>> Stashed changes
 func (order Orders) OrderInDirection(floor int, dir Direction) bool {
 	switch dir {
 	case Up:
@@ -32,8 +29,6 @@ func (order Orders) OrderInDirection(floor int, dir Direction) bool {
 		panic("Invalid direction")
 	}
 }
-<<<<<<< Updated upstream
-=======
 
 func (order Orders) ReportCompletedOrder(floor int, dir Direction, orderDoneC chan<- elevio.ButtonEvent) {
 	if order[floor][elevio.BT_Cab] {
@@ -59,4 +54,3 @@ func (order Orders) ShouldStopForCabOrder(floor int, dir Direction) bool {
 	}
 	return order.OrderInDirection(floor, dir) || !order.OrderAtCurrentFloorOppositeDirection(floor, dir)
 }
->>>>>>> Stashed changes
