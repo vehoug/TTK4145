@@ -44,7 +44,7 @@ func Distributor(
 	var newState       elevator.State
 	var peersStatus    peers.PeerUpdate
 
-	commonState.LocalStates[id].State.ActiveStatus = true
+	commonState.initCommonState(id)
 
 	idle    := true
 	offline := false
@@ -62,7 +62,7 @@ func Distributor(
 			fmt.Printf("Node [%d]: lost network connection\n", id)
 
 		case peersStatus = <-peerUpdateCh:
-			commonState.makeOthersUnavailable(id)
+			commonState.makeLostPeersUnavailable(peersStatus)
 			idle = false
 
 		case <-heartbeatTicker.C:
@@ -133,6 +133,7 @@ func Distributor(
 			if offline {
 				if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
 					offline = false
+					idle = true
 					fmt.Printf("Node [%d]: reconnected to network\n", id)
 				} else {
 					commonState.PeerSyncStatus[id] = Unavailable

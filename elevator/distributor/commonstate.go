@@ -30,17 +30,20 @@ type CommonState struct {
 	LocalStates    [config.NumElevators]LocalState
 }
 
+func (commonState *CommonState) initCommonState(id int) {
+	for i := range commonState.PeerSyncStatus {
+		commonState.PeerSyncStatus[i] = Unavailable
+	}
+	commonState.PeerSyncStatus[id] = Synced
+
+	commonState.LocalStates[id].State.ActiveStatus = true
+}
+
 func (commonState *CommonState) addOrder(newOrder elevio.ButtonEvent, id int) {
 	if newOrder.Button == elevio.BT_Cab {
 		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	} else {
 		commonState.HallRequests[newOrder.Floor][newOrder.Button] = true
-	}
-}
-
-func (commonState *CommonState) addCabCall(newOrder elevio.ButtonEvent, id int) {
-	if newOrder.Button == elevio.BT_Cab {
-		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	}
 }
 
@@ -53,13 +56,15 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 }
 
 func (commonState *CommonState) updateState(newState elevator.State, id int) {
+	newState.ActiveStatus = commonState.LocalStates[id].State.ActiveStatus
+	
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
 		CabRequests: commonState.LocalStates[id].CabRequests,
 	}
 }
 
-func (commonState *CommonState) fullySynced(id int) bool {
+func (commonState CommonState) fullySynced(id int) bool {
 	if commonState.PeerSyncStatus[id] == Unavailable {
 		return false
 	}
