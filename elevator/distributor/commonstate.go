@@ -64,24 +64,6 @@ func (commonState *CommonState) updateState(newState elevator.State, id int) {
 	}
 }
 
-func (commonState CommonState) fullySynced(id int) bool {
-	if commonState.PeerSyncStatus[id] == Unavailable {
-		return false
-	}
-	for index := range commonState.PeerSyncStatus {
-		if commonState.PeerSyncStatus[index] == Pending {
-			return false
-		}
-	}
-	return true
-}
-
-func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
-	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	return reflect.DeepEqual(commonState, arrivedCommonState)
-}
-
 func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
 	for _, idStr := range peers.Lost {
 		id, _ := strconv.Atoi(idStr)
@@ -107,6 +89,12 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 	}
 }
 
+func (commonState *CommonState) applyTransaction(mutation func(), id int) {
+	commonState.prepNewCommonState(id)
+	mutation()
+	commonState.PeerSyncStatus[id] = Synced
+}
+
 func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	if commonState.Version != otherCommonState.Version {
 		return commonState.Version > otherCommonState.Version
@@ -114,12 +102,25 @@ func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	return commonState.UpdaterID > otherCommonState.UpdaterID
 }
 
-func (commonState *CommonState) applyTransaction(mutation func(), id int) {
-	commonState.prepNewCommonState(id)
-	mutation()
-	commonState.PeerSyncStatus[id] = Synced
-}
-
 func (commonState CommonState) isOlderThan(otherCommonState CommonState) bool {
 	return commonState.Version < otherCommonState.Version
 }
+
+func (commonState CommonState) fullySynced(id int) bool {
+	if commonState.PeerSyncStatus[id] == Unavailable {
+		return false
+	}
+	for index := range commonState.PeerSyncStatus {
+		if commonState.PeerSyncStatus[index] == Pending {
+			return false
+		}
+	}
+	return true
+}
+
+func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
+	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	return reflect.DeepEqual(commonState, arrivedCommonState)
+}
+
