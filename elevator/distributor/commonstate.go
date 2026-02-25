@@ -64,10 +64,17 @@ func (commonState *CommonState) updateState(newState elevator.State, id int) {
 	}
 }
 
-func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
-	for _, idStr := range peers.Lost {
+func (commonState *CommonState) makeLostPeersUnavailable(activePeers peers.PeerUpdate) {
+	activeSet := make(map[int]bool, len(activePeers.Peers))
+	for _, idStr := range activePeers.Peers {
 		id, _ := strconv.Atoi(idStr)
-		commonState.PeerSyncStatus[id] = Unavailable
+		activeSet[id] = true
+	}
+	
+	for elev := range commonState.PeerSyncStatus {
+		if !activeSet[elev] {
+			commonState.PeerSyncStatus[elev] = Unavailable
+		}
 	}
 }
 
