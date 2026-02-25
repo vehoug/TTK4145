@@ -26,15 +26,15 @@ type HRAInput struct {
 func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevator.Orders {
 
 	stateMap := make(map[string]HRAState)
-	for i, v := range commonState.LocalStates {
-		if commonState.PeerSyncStatus[i] == distributor.Unavailable || !v.State.ActiveStatus || v.State.Obstructed {
+	for nodeID, node := range commonState.LocalStates {
+		if commonState.PeerSyncStatus[nodeID] == distributor.Unavailable || !node.State.ActiveStatus || node.State.Obstructed {
 			continue
 		} else {
-			stateMap[strconv.Itoa(i)] = HRAState{
-				Behaviour:   v.State.CurrentBehaviour.ToString(),
-				Floor:       v.State.CurrentFloor,
-				Direction:   v.State.Direction.ToString(),
-				CabRequests: v.CabRequests,
+			stateMap[strconv.Itoa(nodeID)] = HRAState{
+				Behaviour:   node.State.CurrentBehaviour.BehaviourToString(),
+				Floor:       node.State.CurrentFloor,
+				Direction:   node.State.Direction.DirectionToString(),
+				CabRequests: node.CabRequests,
 			}
 		}
 	}

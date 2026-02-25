@@ -39,16 +39,16 @@ func initState() State {
 	}
 }
 
-func startMotorTimer(motorTimer *time.Timer, timeout time.Duration) <-chan time.Time {
-	motorTimer.Reset(timeout)
-	return motorTimer.C
+func resetTimer(timer *time.Timer, timeout time.Duration) <-chan time.Time {
+	timer = time.NewTimer(timeout)
+	return timer.C
 }
 
-func stopMotorTimer(motorTimer *time.Timer) <-chan time.Time {
-	motorTimer.Stop()
+func stopTimer(timer *time.Timer) <-chan time.Time {
+	timer.Stop()
 	return nil
 }
 
-func (behaviour CurrentBehaviour) ToString() string {
+func (behaviour CurrentBehaviour) BehaviourToString() string {
 	return map[CurrentBehaviour]string{Idle: "idle", DoorOpen: "doorOpen", Moving: "moving"}[behaviour]
 }
