@@ -2,7 +2,7 @@ package distributor
 
 import (
 	"elevator/config"
-	"elevator/elevator"
+	"elevator/elevcontrol"
 	"elevator/elevio"
 	"elevator/network/peers"
 	"reflect"
@@ -18,7 +18,7 @@ const (
 )
 
 type LocalState struct {
-	State       elevator.State
+	State       elevcontrol.State
 	CabRequests [config.NumFloors]bool
 }
 
@@ -36,7 +36,7 @@ func (commonState *CommonState) initCommonState(id int) {
 	}
 	commonState.PeerSyncStatus[id] = Synced
 
-	commonState.LocalStates[id].State.ActiveStatus = true
+	commonState.LocalStates[id].State.Active = true
 }
 
 func (commonState *CommonState) addOrder(newOrder elevio.ButtonEvent, id int) {
@@ -55,9 +55,9 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 	}
 }
 
-func (commonState *CommonState) updateState(newState elevator.State, id int) {
-	newState.ActiveStatus = commonState.LocalStates[id].State.ActiveStatus
-	
+func (commonState *CommonState) updateState(newState elevcontrol.State, id int) {
+	newState.Active = commonState.LocalStates[id].State.Active
+
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
 		CabRequests: commonState.LocalStates[id].CabRequests,
@@ -123,4 +123,3 @@ func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
 	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	return reflect.DeepEqual(commonState, arrivedCommonState)
 }
-

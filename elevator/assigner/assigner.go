@@ -3,7 +3,7 @@ package assigner
 import (
 	"elevator/config"
 	"elevator/distributor"
-	"elevator/elevator"
+	"elevator/elevcontrol"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -23,24 +23,24 @@ type HRAInput struct {
 	States       map[string]HRAState       `json:"states"`
 }
 
-func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevator.Orders {
+func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevcontrol.Orders {
 
 	stateMap := make(map[string]HRAState)
 	for i, v := range commonState.LocalStates {
-		if commonState.PeerSyncStatus[i] == distributor.Unavailable || !v.State.ActiveStatus || v.State.Obstructed {
+		if commonState.PeerSyncStatus[i] == distributor.Unavailable || !v.State.Active || v.State.Obstructed {
 			continue
 		} else {
 			stateMap[strconv.Itoa(i)] = HRAState{
-				Behaviour:   v.State.CurrentBehaviour.ToString(),
+				Behaviour:   v.State.CurrentBehaviour.BehaviorToString(),
 				Floor:       v.State.CurrentFloor,
-				Direction:   v.State.Direction.ToString(),
+				Direction:   v.State.Direction.DirectionToString(),
 				CabRequests: v.CabRequests,
 			}
 		}
 	}
 
 	if len(stateMap) == 0 {
-		return elevator.Orders{}
+		return elevcontrol.Orders{}
 	}
 
 	hraInput := HRAInput{commonState.HallRequests, stateMap}
@@ -70,7 +70,7 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevato
 		panic("exec.Command error")
 	}
 
-	output := new(map[string]elevator.Orders)
+	output := new(map[string]elevcontrol.Orders)
 	err = json.Unmarshal(ret, &output)
 	if err != nil {
 		fmt.Println("json.Unmarshal error: ", err)

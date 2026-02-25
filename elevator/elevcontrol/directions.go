@@ -1,4 +1,4 @@
-package elevator
+package elevcontrol
 
 import "elevator/elevio"
 
@@ -14,6 +14,6 @@ func (d Direction) Opposite() Direction {
 	return map[Direction]Direction{Up: Down, Down: Up}[d]
 }
 
-func (d Direction) ToString() string {
+func (d Direction) DirectionToString() string {
 	return map[Direction]string{Up: "up", Down: "down"}[d]
 }

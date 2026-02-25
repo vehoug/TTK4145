@@ -1,4 +1,4 @@
-package elevator
+package elevcontrol
 
 import (
 	"elevator/config"
@@ -71,8 +71,8 @@ func Door(
 			if doorState != OpenCountdown {
 				fmt.Printf("Door timer fired in state=%d obstruction=%v\n", doorState, obstruction)
 				panic("Door state not implemented")
-			} 
-			
+			}
+
 			if obstruction {
 				doorState = Obstructed
 
