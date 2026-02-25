@@ -30,17 +30,20 @@ type CommonState struct {
 	LocalStates    [config.NumElevators]LocalState
 }
 
+func (commonState *CommonState) initCommonState(id int) {
+	for i := range commonState.PeerSyncStatus {
+		commonState.PeerSyncStatus[i] = Unavailable
+	}
+	commonState.PeerSyncStatus[id] = Synced
+
+	commonState.LocalStates[id].State.ActiveStatus = true
+}
+
 func (commonState *CommonState) addOrder(newOrder elevio.ButtonEvent, id int) {
 	if newOrder.Button == elevio.BT_Cab {
 		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	} else {
 		commonState.HallRequests[newOrder.Floor][newOrder.Button] = true
-	}
-}
-
-func (commonState *CommonState) addCabCall(newOrder elevio.ButtonEvent, id int) {
-	if newOrder.Button == elevio.BT_Cab {
-		commonState.LocalStates[id].CabRequests[newOrder.Floor] = true
 	}
 }
 
@@ -53,28 +56,12 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 }
 
 func (commonState *CommonState) updateState(newState elevator.State, id int) {
+	newState.ActiveStatus = commonState.LocalStates[id].State.ActiveStatus
+	
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
 		CabRequests: commonState.LocalStates[id].CabRequests,
 	}
-}
-
-func (commonState *CommonState) fullySynced(id int) bool {
-	if commonState.PeerSyncStatus[id] == Unavailable {
-		return false
-	}
-	for index := range commonState.PeerSyncStatus {
-		if commonState.PeerSyncStatus[index] == Pending {
-			return false
-		}
-	}
-	return true
-}
-
-func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
-	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	return reflect.DeepEqual(commonState, arrivedCommonState)
 }
 
 func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
@@ -102,6 +89,12 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 	}
 }
 
+func (commonState *CommonState) applyTransaction(mutation func(), id int) {
+	commonState.prepNewCommonState(id)
+	mutation()
+	commonState.PeerSyncStatus[id] = Synced
+}
+
 func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	if commonState.Version != otherCommonState.Version {
 		return commonState.Version > otherCommonState.Version
@@ -109,12 +102,25 @@ func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	return commonState.UpdaterID > otherCommonState.UpdaterID
 }
 
-func (commonState *CommonState) applyTransaction(mutation func(), id int) {
-	commonState.prepNewCommonState(id)
-	mutation()
-	commonState.PeerSyncStatus[id] = Synced
-}
-
 func (commonState CommonState) isOlderThan(otherCommonState CommonState) bool {
 	return commonState.Version < otherCommonState.Version
 }
+
+func (commonState CommonState) fullySynced(id int) bool {
+	if commonState.PeerSyncStatus[id] == Unavailable {
+		return false
+	}
+	for index := range commonState.PeerSyncStatus {
+		if commonState.PeerSyncStatus[index] == Pending {
+			return false
+		}
+	}
+	return true
+}
+
+func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
+	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	return reflect.DeepEqual(commonState, arrivedCommonState)
+}
+
