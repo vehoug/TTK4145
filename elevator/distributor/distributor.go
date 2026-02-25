@@ -144,7 +144,7 @@ func Distributor(
 				}
 
 			} else if idle {
-				disconnectTimer.Reset(config.DisconnectTime)
+				disconnectTimer = time.NewTimer(config.DisconnectTime)
 				if arrivedCommonState.isNewerThan(commonState) {
 					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
 					commonState = arrivedCommonState
@@ -159,7 +159,7 @@ func Distributor(
 					break
 				}
 
-				disconnectTimer.Reset(config.DisconnectTime)
+				disconnectTimer = time.NewTimer(config.DisconnectTime)
 
 				switch {
 				case arrivedCommonState.isNewerThan(commonState):
