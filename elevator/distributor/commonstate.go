@@ -2,7 +2,7 @@ package distributor
 
 import (
 	"elevator/config"
-	"elevator/elevator"
+	"elevator/elevcontrol"
 	"elevator/elevio"
 	"elevator/network/peers"
 	"reflect"
@@ -18,7 +18,7 @@ const (
 )
 
 type LocalState struct {
-	State       elevator.State
+	State       elevcontrol.State
 	CabRequests [config.NumFloors]bool
 }
 
@@ -36,7 +36,7 @@ func (commonState *CommonState) initCommonState(id int) {
 	}
 	commonState.PeerSyncStatus[id] = Synced
 
-	commonState.LocalStates[id].State.ActiveStatus = true
+	commonState.LocalStates[id].State.IsActive = true
 }
 
 func (commonState *CommonState) addOrder(newOrder elevio.ButtonEvent, id int) {
@@ -55,7 +55,7 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 	}
 }
 
-func (commonState *CommonState) updateState(newState elevator.State, id int) {
+func (commonState *CommonState) updateState(newState elevcontrol.State, id int) {
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
 		CabRequests: commonState.LocalStates[id].CabRequests,
@@ -68,7 +68,7 @@ func (commonState *CommonState) makeInactivePeersUnavailable(activePeers peers.P
 		id, _ := strconv.Atoi(idStr)
 		activeSet[id] = true
 	}
-	
+
 	for elev := range commonState.PeerSyncStatus {
 		if !activeSet[elev] {
 			commonState.PeerSyncStatus[elev] = Unavailable
@@ -132,4 +132,3 @@ func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
 	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	return reflect.DeepEqual(commonState, arrivedCommonState)
 }
-

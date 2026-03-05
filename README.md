@@ -1,7 +1,6 @@
 # TTK4145 Real-time Programming
 
 ## Distributed Elevator Control System
->*Software for controlling $n$ elevators working in parallel across $m$ floors.*
 
 ### How to launch elevators:
 1. Navigate to `elevator` directory.
