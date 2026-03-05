@@ -61,7 +61,7 @@ func Distributor(
 			fmt.Printf("Node [%d]: lost network connection\n", id)
 
 		case peersStatus = <-peerUpdateCh:
-			commonState.makeLostPeersUnavailable(peersStatus)
+			commonState.makeInactivePeersUnavailable(peersStatus)
 			idle = false
 
 		case <-heartbeatTicker.C:
@@ -130,11 +130,10 @@ func Distributor(
 
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
-				if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} {
-					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
-					commonState = arrivedCommonState
-					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
-					commonState.makeLostPeersUnavailable(peersStatus)
+				if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} &&
+				   commonState.HallRequests == [config.NumFloors][2]bool{} {
+					commonState.updateWithArrivedCommonState(arrivedCommonState, id)
+					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 					offline = false
 					idle = false
@@ -146,10 +145,8 @@ func Distributor(
 			} else if idle {
 				disconnectTimer = time.NewTimer(config.DisconnectTime)
 				if arrivedCommonState.isNewerThan(commonState) {
-					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
-					commonState = arrivedCommonState
-					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
-					commonState.makeLostPeersUnavailable(peersStatus)
+					commonState.updateWithArrivedCommonState(arrivedCommonState, id)
+					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 					idle = false
 				}
@@ -163,16 +160,12 @@ func Distributor(
 
 				switch {
 				case arrivedCommonState.isNewerThan(commonState):
-					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
-					commonState = arrivedCommonState
-					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
-					commonState.makeLostPeersUnavailable(peersStatus)
+					commonState.updateWithArrivedCommonState(arrivedCommonState, id)
+					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 
 				case arrivedCommonState.fullySynced(id):
-					myActiveStatus := commonState.LocalStates[id].State.ActiveStatus
-					commonState = arrivedCommonState
-					commonState.LocalStates[id].State.ActiveStatus = myActiveStatus
+					commonState.updateWithArrivedCommonState(arrivedCommonState, id)
 					syncedCommonStateCh <- commonState
 
 					if len(pendingQueue) > 0 {
@@ -196,7 +189,7 @@ func Distributor(
 
 				case commonState.equals(arrivedCommonState):
 					commonState = arrivedCommonState
-					commonState.makeLostPeersUnavailable(peersStatus)
+					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 				}
 			}
