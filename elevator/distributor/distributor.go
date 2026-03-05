@@ -130,38 +130,24 @@ func Distributor(
 
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
-				var base, stale CommonState
-        		if commonState.isNewerThan(arrivedCommonState) {
-        		    base, stale = commonState, arrivedCommonState
-        		} else {
-        		    base, stale = arrivedCommonState, commonState
-        		}
+				allCabCallsDone  := commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{}
+				allHallCallsDone := commonState.HallRequests == [config.NumFloors][config.NumDirections]bool{} 
 
-        		for floor := range stale.HallRequests {
-        		    for button := range stale.HallRequests[floor] {
-        		        if stale.HallRequests[floor][button] {
-        		            base.HallRequests[floor][button] = true
-        		        }
-        		    }
-        		}
-        		for floor := range stale.LocalStates[id].CabRequests {
-        		    if stale.LocalStates[id].CabRequests[floor] {
-        		        base.LocalStates[id].CabRequests[floor] = true
-        		    }
-        		}
-
-        		commonState = base
-        		commonState.makeInactivePeersUnavailable(peersStatus)
-        		commonState.prepNewCommonState(id)
-        		commonState.PeerSyncStatus[id] = Synced
-        		offline = false
-        		idle = false
-				fmt.Printf("Node [%d]: reconnected to network\n", id)
+				if allCabCallsDone && allHallCallsDone {
+					commonState = arrivedCommonState
+					commonState.makeInactivePeersUnavailable(peersStatus)
+					commonState.PeerSyncStatus[id] = Synced
+					offline = false
+					idle = false
+					fmt.Printf("Node [%d]: reconnected to network\n", id)
+				} else {
+					commonState.PeerSyncStatus[id] = Unavailable
+				}
 
 			} else if idle {
 				disconnectTimer = time.NewTimer(config.DisconnectTime)
 				if arrivedCommonState.isNewerThan(commonState) {
-					commonState.updateWithArrivedCommonState(arrivedCommonState)
+					commonState = arrivedCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 					idle = false
@@ -176,12 +162,12 @@ func Distributor(
 
 				switch {
 				case arrivedCommonState.isNewerThan(commonState):
-					commonState.updateWithArrivedCommonState(arrivedCommonState)
+					commonState = arrivedCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 
 				case arrivedCommonState.fullySynced(id):
-					commonState.updateWithArrivedCommonState(arrivedCommonState)
+					commonState = arrivedCommonState
 					syncedCommonStateCh <- commonState
 
 					if len(pendingQueue) > 0 {

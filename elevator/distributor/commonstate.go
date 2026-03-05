@@ -26,7 +26,7 @@ type CommonState struct {
 	Version        uint64
 	UpdaterID      int
 	PeerSyncStatus [config.NumElevators]SyncStatus
-	HallRequests   [config.NumFloors][2]bool
+	HallRequests   [config.NumFloors][config.NumDirections]bool
 	LocalStates    [config.NumElevators]LocalState
 }
 
@@ -92,10 +92,6 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 			commonState.PeerSyncStatus[node] = Pending
 		}
 	}
-}
-
-func (commonState *CommonState) updateWithArrivedCommonState(arrivedCommonState CommonState) {
-	*commonState = arrivedCommonState
 }
 
 func (commonState *CommonState) applyTransaction(mutation func(), id int) {
