@@ -56,18 +56,23 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 }
 
 func (commonState *CommonState) updateState(newState elevator.State, id int) {
-	newState.ActiveStatus = commonState.LocalStates[id].State.ActiveStatus
-	
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
 		CabRequests: commonState.LocalStates[id].CabRequests,
 	}
 }
 
-func (commonState *CommonState) makeLostPeersUnavailable(peers peers.PeerUpdate) {
-	for _, idStr := range peers.Lost {
+func (commonState *CommonState) makeInactivePeersUnavailable(activePeers peers.PeerUpdate) {
+	activeSet := make(map[int]bool, len(activePeers.Peers))
+	for _, idStr := range activePeers.Peers {
 		id, _ := strconv.Atoi(idStr)
-		commonState.PeerSyncStatus[id] = Unavailable
+		activeSet[id] = true
+	}
+	
+	for elev := range commonState.PeerSyncStatus {
+		if !activeSet[elev] {
+			commonState.PeerSyncStatus[elev] = Unavailable
+		}
 	}
 }
 
@@ -87,6 +92,10 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 			commonState.PeerSyncStatus[node] = Pending
 		}
 	}
+}
+
+func (commonState *CommonState) updateWithArrivedCommonState(arrivedCommonState CommonState, id int) {
+	*commonState = arrivedCommonState
 }
 
 func (commonState *CommonState) applyTransaction(mutation func(), id int) {
