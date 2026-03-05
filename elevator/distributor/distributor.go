@@ -58,7 +58,7 @@ func Distributor(
 		case <-disconnectTimer.C:
 			commonState.makeOthersUnavailable(id)
 			offline = true
-			fmt.Printf("Node [%d]: lost network connection\n", id)
+			fmt.Printf("[Node %d]: Network connection lost. Operating independently.\n", id)
 
 		case peersStatus = <-peerUpdateCh:
 			commonState.makeInactivePeersUnavailable(peersStatus)
@@ -139,7 +139,7 @@ func Distributor(
 					commonState.PeerSyncStatus[id] = Synced
 					offline = false
 					idle = false
-					fmt.Printf("Node [%d]: reconnected to network\n", id)
+					fmt.Printf("[Node %d]: Network connection restored. Operating normally.\n", id)
 				} else {
 					commonState.PeerSyncStatus[id] = Unavailable
 				}
