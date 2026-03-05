@@ -25,28 +25,28 @@ type PendingOperation struct {
 }
 
 func Distributor(
-	networkReceiveCh <-chan CommonState,
-	peerUpdateCh <-chan peers.PeerUpdate,
+	networkReceiveCh    <-chan CommonState,
+	peerUpdateCh        <-chan peers.PeerUpdate,
 	syncedCommonStateCh chan<- CommonState,
-	networkTransmitCh chan<- CommonState,
-	deliveredOrderCh <-chan elevio.ButtonEvent,
-	newStateCh <-chan elevcontrol.State,
-	id int,
+	networkTransmitCh   chan<- CommonState,
+	deliveredOrderCh    <-chan elevio.ButtonEvent,
+	newStateCh          <-chan elevcontrol.State,
+	id                  int,
 ) {
 	newOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
 	go elevio.PollButtons(newOrderCh)
 
 	pendingQueue := make([]PendingOperation, 0)
 
-	var commonState CommonState
+	var commonState    CommonState
 	var deliveredOrder elevio.ButtonEvent
-	var newOrder elevio.ButtonEvent
-	var newState elevcontrol.State
-	var peersStatus peers.PeerUpdate
+	var newOrder       elevio.ButtonEvent
+	var newState       elevcontrol.State
+	var peersStatus    peers.PeerUpdate
 
 	commonState.initCommonState(id)
 
-	idle := true
+	idle    := true
 	offline := false
 
 	disconnectTimer := time.NewTimer(config.DisconnectTime)
@@ -171,17 +171,19 @@ func Distributor(
 					syncedCommonStateCh <- commonState
 
 					if len(pendingQueue) > 0 {
-						op := pendingQueue[0]
+						operation := pendingQueue[0]
 						pendingQueue = pendingQueue[1:]
 						commonState.prepNewCommonState(id)
 
-						switch op.Type {
+						switch operation.Type {
 						case AddOrder:
-							commonState.addOrder(op.Order, id)
+							commonState.addOrder(operation.Order, id)
+
 						case RemoveOrder:
-							commonState.removeOrder(op.Order, id)
+							commonState.removeOrder(operation.Order, id)
+
 						case StateUpdate:
-							commonState.updateState(op.State, id)
+							commonState.updateState(operation.State, id)
 						}
 						commonState.PeerSyncStatus[id] = Synced
 

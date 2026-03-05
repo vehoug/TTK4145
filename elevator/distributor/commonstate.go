@@ -31,8 +31,8 @@ type CommonState struct {
 }
 
 func (commonState *CommonState) initCommonState(id int) {
-	for i := range commonState.PeerSyncStatus {
-		commonState.PeerSyncStatus[i] = Unavailable
+	for elev := range commonState.PeerSyncStatus {
+		commonState.PeerSyncStatus[elev] = Unavailable
 	}
 	commonState.PeerSyncStatus[id] = Synced
 
