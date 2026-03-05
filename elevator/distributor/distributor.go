@@ -2,7 +2,7 @@ package distributor
 
 import (
 	"elevator/config"
-	"elevator/elevator"
+	"elevator/elevcontrol"
 	"elevator/elevio"
 	"elevator/network/peers"
 	"fmt"
@@ -21,32 +21,32 @@ const (
 type PendingOperation struct {
 	Type  OperationType
 	Order elevio.ButtonEvent
-	State elevator.State
+	State elevcontrol.State
 }
 
 func Distributor(
-	networkReceiveCh    <-chan CommonState,
-	peerUpdateCh        <-chan peers.PeerUpdate,
+	networkReceiveCh <-chan CommonState,
+	peerUpdateCh <-chan peers.PeerUpdate,
 	syncedCommonStateCh chan<- CommonState,
-	networkTransmitCh   chan<- CommonState,
-	deliveredOrderCh    <-chan elevio.ButtonEvent,
-	newStateCh          <-chan elevator.State,
-	id                  int,
+	networkTransmitCh chan<- CommonState,
+	deliveredOrderCh <-chan elevio.ButtonEvent,
+	newStateCh <-chan elevcontrol.State,
+	id int,
 ) {
 	newOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
 	go elevio.PollButtons(newOrderCh)
 
 	pendingQueue := make([]PendingOperation, 0)
 
-	var commonState    CommonState
+	var commonState CommonState
 	var deliveredOrder elevio.ButtonEvent
-	var newOrder       elevio.ButtonEvent
-	var newState       elevator.State
-	var peersStatus    peers.PeerUpdate
+	var newOrder elevio.ButtonEvent
+	var newState elevcontrol.State
+	var peersStatus peers.PeerUpdate
 
 	commonState.initCommonState(id)
 
-	idle    := true
+	idle := true
 	offline := false
 
 	disconnectTimer := time.NewTimer(config.DisconnectTime)
@@ -69,7 +69,7 @@ func Distributor(
 
 		case newOrder = <-newOrderCh:
 			if offline {
-				if commonState.LocalStates[id].State.ActiveStatus {
+				if commonState.LocalStates[id].State.IsActive {
 					commonState.PeerSyncStatus[id] = Synced
 					commonState.addOrder(newOrder, id)
 					syncedCommonStateCh <- commonState
@@ -109,7 +109,7 @@ func Distributor(
 
 		case newState = <-newStateCh:
 			if offline {
-				if newState.ActiveStatus && !newState.Obstructed {
+				if newState.IsActive && !newState.Obstructed {
 					commonState.PeerSyncStatus[id] = Synced
 					commonState.updateState(newState, id)
 					syncedCommonStateCh <- commonState
@@ -131,7 +131,7 @@ func Distributor(
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
 				if commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{} &&
-				   commonState.HallRequests == [config.NumFloors][2]bool{} {
+					commonState.HallRequests == [config.NumFloors][2]bool{} {
 					commonState.updateWithArrivedCommonState(arrivedCommonState, id)
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced

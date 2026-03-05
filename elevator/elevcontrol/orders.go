@@ -1,4 +1,4 @@
-package elevator
+package elevcontrol
 
 import (
 	"elevator/config"
