@@ -21,7 +21,6 @@ func Door(
 	obstructionCh chan<- bool,
 	doorTimerCh <-chan time.Time,
 ) {
-
 	elevio.SetDoorOpenLamp(false)
 	obstructionPollCh := make(chan bool)
 	go elevio.PollObstructionSwitch(obstructionPollCh)
@@ -29,7 +28,7 @@ func Door(
 	obstruction := false
 	doorState := Closed
 	doorTimer := time.NewTimer(time.Hour)
-	doorTimerCh = resetTimer(doorTimer, config.DoorOpenDuration)
+	doorTimer.Stop()
 
 	for {
 		select {
