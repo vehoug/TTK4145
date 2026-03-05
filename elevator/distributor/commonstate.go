@@ -55,6 +55,30 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 	}
 }
 
+func (commonState *CommonState) mergeWithOfflineOrders(offlineCommonState CommonState, id int) {
+	var base, stale *CommonState
+	if commonState.isNewerThan(offlineCommonState) {
+		base, stale = commonState, &offlineCommonState
+	} else {
+		base, stale = &offlineCommonState, commonState
+		*commonState = offlineCommonState
+	}
+	_ = base
+
+	for floor := range stale.HallRequests {
+		for button := range stale.HallRequests[floor] {
+			if stale.HallRequests[floor][button] {
+				commonState.HallRequests[floor][button] = true
+			}
+		}
+	}
+	for floor := range stale.LocalStates[id].CabRequests {
+		if stale.LocalStates[id].CabRequests[floor] {
+			commonState.LocalStates[id].CabRequests[floor] = true
+		}
+	}
+}
+
 func (commonState *CommonState) updateState(newState elevcontrol.State, id int) {
 	commonState.LocalStates[id] = LocalState{
 		State:       newState,
@@ -94,7 +118,7 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 	}
 }
 
-func (commonState *CommonState) updateWithArrivedCommonState(arrivedCommonState CommonState, id int) {
+func (commonState *CommonState) updateWithArrivedCommonState(arrivedCommonState CommonState) {
 	*commonState = arrivedCommonState
 }
 
