@@ -94,12 +94,6 @@ func (commonState *CommonState) prepNewCommonState(id int) {
 	}
 }
 
-func (commonState *CommonState) applyTransaction(mutation func(), id int) {
-	commonState.prepNewCommonState(id)
-	mutation()
-	commonState.PeerSyncStatus[id] = Synced
-}
-
 func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 	if commonState.Version != otherCommonState.Version {
 		return commonState.Version > otherCommonState.Version

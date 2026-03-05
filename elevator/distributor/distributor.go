@@ -76,9 +76,9 @@ func Distributor(
 				}
 
 			} else if idle {
-				commonState.applyTransaction(func() {
-					commonState.addOrder(newOrder, id)
-				}, id)
+				commonState.prepNewCommonState(id)
+				commonState.addOrder(newOrder, id)
+				commonState.PeerSyncStatus[id] = Synced
 				idle = false
 
 			} else {
@@ -95,9 +95,9 @@ func Distributor(
 				syncedCommonStateCh <- commonState
 
 			} else if idle {
-				commonState.applyTransaction(func() {
-					commonState.removeOrder(deliveredOrder, id)
-				}, id)
+				commonState.prepNewCommonState(id)
+				commonState.removeOrder(deliveredOrder, id)
+				commonState.PeerSyncStatus[id] = Synced
 				idle = false
 
 			} else {
@@ -116,9 +116,9 @@ func Distributor(
 				}
 
 			} else if idle {
-				commonState.applyTransaction(func() {
-					commonState.updateState(newState, id)
-				}, id)
+				commonState.prepNewCommonState(id)
+				commonState.updateState(newState, id)
+				commonState.PeerSyncStatus[id] = Synced
 				idle = false
 
 			} else {
