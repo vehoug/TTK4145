@@ -130,13 +130,32 @@ func Distributor(
 
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
-				arrivedCommonState.mergeWithOfflineOrders(commonState, id)
-				commonState.updateWithArrivedCommonState(arrivedCommonState)
-				commonState.makeInactivePeersUnavailable(peersStatus)
-				commonState.prepNewCommonState(id)
-				commonState.PeerSyncStatus[id] = Synced
-				offline = false
-				idle = false
+				var base, stale CommonState
+        		if commonState.isNewerThan(arrivedCommonState) {
+        		    base, stale = commonState, arrivedCommonState
+        		} else {
+        		    base, stale = arrivedCommonState, commonState
+        		}
+
+        		for floor := range stale.HallRequests {
+        		    for button := range stale.HallRequests[floor] {
+        		        if stale.HallRequests[floor][button] {
+        		            base.HallRequests[floor][button] = true
+        		        }
+        		    }
+        		}
+        		for floor := range stale.LocalStates[id].CabRequests {
+        		    if stale.LocalStates[id].CabRequests[floor] {
+        		        base.LocalStates[id].CabRequests[floor] = true
+        		    }
+        		}
+
+        		commonState = base
+        		commonState.makeInactivePeersUnavailable(peersStatus)
+        		commonState.prepNewCommonState(id)
+        		commonState.PeerSyncStatus[id] = Synced
+        		offline = false
+        		idle = false
 				fmt.Printf("Node [%d]: reconnected to network\n", id)
 
 			} else if idle {
