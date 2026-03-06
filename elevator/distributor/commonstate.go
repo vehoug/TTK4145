@@ -102,7 +102,10 @@ func (commonState CommonState) isNewerThan(otherCommonState CommonState) bool {
 }
 
 func (commonState CommonState) isOlderThan(otherCommonState CommonState) bool {
-	return commonState.Version < otherCommonState.Version
+	if commonState.Version != otherCommonState.Version {
+		return commonState.Version < otherCommonState.Version
+	}
+	return commonState.UpdaterID < otherCommonState.UpdaterID
 }
 
 func (commonState CommonState) fullySynced(id int) bool {
