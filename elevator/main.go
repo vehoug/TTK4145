@@ -16,7 +16,7 @@ import (
 
 func main() {
 	var port int
-	var id int
+	var id   int
 
 	flag.IntVar(&port, "port", config.DefaultPort, "Default elevator port number")
 	flag.IntVar(&id, "id", 0, "Default elevator ID")
@@ -24,15 +24,15 @@ func main() {
 
 	elevio.Init(fmt.Sprintf("localhost:%d", port), config.NumFloors)
 
-	newOrderCh := make(chan elevcontrol.Orders, config.Buffer)
+	newOrderCh       := make(chan elevcontrol.Orders, config.Buffer)
 	deliveredOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
-	newStateCh := make(chan elevcontrol.State, config.Buffer)
+	newStateCh       := make(chan elevcontrol.State, config.Buffer)
 
 	syncedCommonStateCh := make(chan distributor.CommonState, config.Buffer)
-	networkReceiveCh := make(chan distributor.CommonState, config.Buffer)
-	networkTransmitCh := make(chan distributor.CommonState, config.Buffer)
+	networkReceiveCh    := make(chan distributor.CommonState, config.Buffer)
+	networkTransmitCh   := make(chan distributor.CommonState, config.Buffer)
 
-	peerUpdateCh := make(chan peers.PeerUpdate, config.Buffer)
+	peerUpdateCh    := make(chan peers.PeerUpdate, config.Buffer)
 	peersTransmitCh := make(chan bool, config.Buffer)
 
 	go peers.Receiver(config.PeersPortNumber, peerUpdateCh)
@@ -55,11 +55,10 @@ func main() {
 		newStateCh,
 		deliveredOrderCh)
 
-	fmt.Printf("Elevator Node [%d] initialized\n\tNumber of floors: %d\n\tNumber of elevators: %d\n",
+	fmt.Printf("[Node %d]: Elevator initialized.\n\tNumber of floors: %d\n\tNumber of elevators: %d\n",
 		id, config.NumFloors, config.NumElevators)
 
 	for commonState := range syncedCommonStateCh {
-
 		newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
 		lights.SetLights(commonState, id)
 	}

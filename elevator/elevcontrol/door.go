@@ -16,10 +16,10 @@ const (
 )
 
 func Door(
-	doorClosedCh chan<- bool,
-	doorOpenCh <-chan bool,
+	doorClosedCh  chan<- bool,
+	doorOpenCh    <-chan bool,
 	obstructionCh chan<- bool,
-	doorTimerCh <-chan time.Time,
+	doorTimerCh   <-chan time.Time,
 ) {
 	elevio.SetDoorOpenLamp(false)
 	obstructionPollCh := make(chan bool)

@@ -6,21 +6,21 @@ import (
 	"fmt"
 )
 
-func (order Orders) orderInDirection(floor int, dir Direction) bool {
+func (order Orders) orderInDirection(currentFloor int, dir Direction) bool {
 	switch dir {
 	case Up:
-		for f := floor + 1; f < config.NumFloors; f++ {
-			for b := 0; b < config.NumButtons; b++ {
-				if order[f][b] {
+		for floor := currentFloor + 1; floor < config.NumFloors; floor++ {
+			for button := range config.NumButtons {
+				if order[floor][button] {
 					return true
 				}
 			}
 		}
 		return false
 	case Down:
-		for f := floor - 1; f >= 0; f-- {
-			for b := 0; b < config.NumButtons; b++ {
-				if order[f][b] {
+		for floor := currentFloor - 1; floor >= 0; floor-- {
+			for button := range config.NumButtons {
+				if order[floor][button] {
 					return true
 				}
 			}

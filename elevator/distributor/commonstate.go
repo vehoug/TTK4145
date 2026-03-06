@@ -87,9 +87,9 @@ func (commonState *CommonState) makeOthersUnavailable(id int) {
 func (commonState *CommonState) prepNewCommonState(id int) {
 	commonState.Version++
 	commonState.UpdaterID = id
-	for node := range commonState.PeerSyncStatus {
-		if commonState.PeerSyncStatus[node] == Synced {
-			commonState.PeerSyncStatus[node] = Pending
+	for elev := range commonState.PeerSyncStatus {
+		if commonState.PeerSyncStatus[elev] == Synced {
+			commonState.PeerSyncStatus[elev] = Pending
 		}
 	}
 }
@@ -109,8 +109,8 @@ func (commonState CommonState) fullySynced(id int) bool {
 	if commonState.PeerSyncStatus[id] == Unavailable {
 		return false
 	}
-	for index := range commonState.PeerSyncStatus {
-		if commonState.PeerSyncStatus[index] == Pending {
+	for elev := range commonState.PeerSyncStatus {
+		if commonState.PeerSyncStatus[elev] == Pending {
 			return false
 		}
 	}
@@ -118,7 +118,7 @@ func (commonState CommonState) fullySynced(id int) bool {
 }
 
 func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
-	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	commonState.PeerSyncStatus        = [config.NumElevators]SyncStatus{}
 	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	return reflect.DeepEqual(commonState, arrivedCommonState)
 }
