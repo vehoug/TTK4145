@@ -130,7 +130,7 @@ func Distributor(
 
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
-				commonState.mergeCommonStates(arrivedCommonState, id)
+				arrivedCommonState.mergeCommonStates(commonState, id)
 				commonState = arrivedCommonState
 				commonState.makeInactivePeersUnavailable(peersStatus)
 				commonState.PeerSyncStatus[id] = Synced

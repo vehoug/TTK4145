@@ -62,7 +62,7 @@ func (commonState *CommonState) updateState(newState elevcontrol.State, id int) 
 	}
 }
 
-func (commonState *CommonState) mergeCommonStates(arrivedCommonState CommonState, id int) {
+func (arrivedCommonState *CommonState) mergeCommonStates(commonState CommonState, id int) {
 	for floor := range config.NumFloors {
 		for direction := range config.NumDirections {
 			arrivedCommonState.HallRequests[floor][direction] =
@@ -131,7 +131,7 @@ func (commonState CommonState) fullySynced(id int) bool {
 }
 
 func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
-	commonState.PeerSyncStatus        = [config.NumElevators]SyncStatus{}
+	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	return reflect.DeepEqual(commonState, arrivedCommonState)
 }
