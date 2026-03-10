@@ -62,6 +62,16 @@ func (commonState *CommonState) updateState(newState elevcontrol.State, id int) 
 	}
 }
 
+func (commonState *CommonState) mergeCommonStates(arrivedCommonState CommonState, id int) {
+	for floor := range config.NumFloors {
+		for direction := range config.NumDirections {
+			commonState.HallRequests[floor][direction] =
+				arrivedCommonState.HallRequests[floor][direction] || commonState.HallRequests[floor][direction]
+		}
+	}
+	arrivedCommonState.LocalStates[id].CabRequests = commonState.LocalStates[id].CabRequests
+}
+
 func (commonState *CommonState) makeInactivePeersUnavailable(activePeers peers.PeerUpdate) {
 	activeSet := make(map[int]bool, len(activePeers.Peers))
 	for _, idStr := range activePeers.Peers {

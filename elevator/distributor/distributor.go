@@ -130,19 +130,13 @@ func Distributor(
 
 		case arrivedCommonState := <-networkReceiveCh:
 			if offline {
-				allCabCallsDone  := commonState.LocalStates[id].CabRequests == [config.NumFloors]bool{}
-				allHallCallsDone := commonState.HallRequests == [config.NumFloors][config.NumDirections]bool{} 
-
-				if allCabCallsDone && allHallCallsDone {
-					commonState = arrivedCommonState
-					commonState.makeInactivePeersUnavailable(peersStatus)
-					commonState.PeerSyncStatus[id] = Synced
-					offline = false
-					idle = false
-					fmt.Printf("[Node %d]: Network connection restored. Operating normally.\n", id)
-				} else {
-					commonState.PeerSyncStatus[id] = Unavailable
-				}
+				commonState.mergeCommonStates(arrivedCommonState, id)
+				commonState = arrivedCommonState
+				commonState.makeInactivePeersUnavailable(peersStatus)
+				commonState.PeerSyncStatus[id] = Synced
+				offline = false
+				idle = false
+				fmt.Printf("[Node %d]: Network connection restored. Operating normally.\n", id)
 
 			} else if idle {
 				disconnectTimer = time.NewTimer(config.DisconnectTime)
