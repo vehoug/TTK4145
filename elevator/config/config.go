@@ -18,6 +18,6 @@ const (
 
 	DisconnectTime   = 1 * time.Second
 	DoorOpenDuration = 3 * time.Second
-	WatchdogTime     = 4 * time.Second
+	WatchdogTime     = 3 * time.Second
 	HeartbeatTime    = 15 * time.Millisecond
 )
