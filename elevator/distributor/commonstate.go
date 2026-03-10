@@ -65,7 +65,7 @@ func (commonState *CommonState) updateState(newState elevcontrol.State, id int) 
 func (commonState *CommonState) mergeCommonStates(arrivedCommonState CommonState, id int) {
 	for floor := range config.NumFloors {
 		for direction := range config.NumDirections {
-			commonState.HallRequests[floor][direction] =
+			arrivedCommonState.HallRequests[floor][direction] =
 				arrivedCommonState.HallRequests[floor][direction] || commonState.HallRequests[floor][direction]
 		}
 	}
