@@ -65,7 +65,7 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevcon
 		panic("json.Marshal error")
 	}
 
-	outputBytes, err := exec.Command("assigner/executables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
+	outputBytes, err := exec.Command("assigner/executables/" + hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Printf("[%v][Assigner]: exec.Command error: %v", time.Now().Format(time.TimeOnly), err)
 		fmt.Printf("[%v][Assigner]: Output: %v", time.Now().Format(time.TimeOnly), string(outputBytes))

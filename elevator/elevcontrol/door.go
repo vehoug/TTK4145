@@ -42,25 +42,26 @@ func Door(
 			switch doorState {
 			case Closed:
 				elevio.SetDoorOpenLamp(true)
-				resetTimer(doorTimer, config.DoorOpenTime)
+				doorTimerCh = resetTimer(doorTimer, config.DoorOpenTime)
 				doorState = OpenCountdown
 
 			case OpenCountdown:
-				resetTimer(doorTimer, config.DoorOpenTime)
+				doorTimerCh = resetTimer(doorTimer, config.DoorOpenTime)
 
 			case Obstructed:
-				resetTimer(doorTimer, config.DoorOpenTime)
+				doorTimerCh = resetTimer(doorTimer, config.DoorOpenTime)
 				doorState = OpenCountdown
 
 			default:
-				fmt.Printf("[%v][Door]: Invalid state: Door opened while door not closed. \n", time.Now().Format(time.TimeOnly))
+                fmt.Printf("[%v][ElevControl]: Invalid door state: Door opened while not closed.\n", time.Now().Format(time.TimeOnly))
+
 			}
 
 			obstructionCh <- (obstruction && doorState != Closed)
 
 		case <-doorTimer.C:
 			if doorState != OpenCountdown {
-				fmt.Printf("[%v][Door]: Invalid state: Door timer expired while door not open. \n", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Invalid door state: Door timer expired while door not open.\n", time.Now().Format(time.TimeOnly))
 			}
 
 			if obstruction {

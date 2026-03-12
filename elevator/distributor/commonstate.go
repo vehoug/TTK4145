@@ -126,7 +126,7 @@ func (commonState CommonState) fullySynced(id int) bool {
 	return true
 }
 
-func (commonState CommonState) equalsIgnoreSyncStatus(arrivingCommonState CommonState) bool {
+func (commonState CommonState) equalsIgnoringSyncStatus(arrivingCommonState CommonState) bool {
 	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	arrivingCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
 	return reflect.DeepEqual(commonState, arrivingCommonState)

@@ -129,7 +129,7 @@ func Distributor(
 			}
 
 		case arrivingCommonState := <-networkReceiveCh:
-			disconnectTimer = time.NewTimer(config.DisconnectTime)
+            disconnectTimer = time.NewTimer(config.DisconnectTime)
 			if offline {
 				arrivingCommonState.mergeCommonStates(commonState, id)
 				commonState = arrivingCommonState
@@ -137,7 +137,7 @@ func Distributor(
 				commonState.PeerSyncStatus[id] = Synced
 				offline = false
 				idle = false
-				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally. \n", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally.\n", time.Now().Format(time.TimeOnly))
 
 			} else if idle {
 				if arrivingCommonState.isNewerThan(commonState) {
@@ -183,7 +183,7 @@ func Distributor(
 						idle = true
 					}
 
-				case commonState.equalsIgnoreSyncStatus(arrivingCommonState):
+				case commonState.equalsIgnoringSyncStatus(arrivingCommonState):
 					commonState = arrivingCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced

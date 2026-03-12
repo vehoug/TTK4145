@@ -13,11 +13,13 @@ func ElevatorStateMachine(
 	deliveredOrderCh chan<- elevio.ButtonEvent,
 ) {
 	var (
-		floorEnteredCh = make(chan int,  config.ControlBufferSize)
-		doorOpenCh     = make(chan bool, config.ControlBufferSize)
-		doorClosedCh   = make(chan bool, config.ControlBufferSize)
-		obstructionCh  = make(chan bool, config.ControlBufferSize)
-		orders         Orders
+		floorEnteredCh  = make(chan int,  config.ControlBufferSize)
+		doorOpenCh      = make(chan bool, config.ControlBufferSize)
+		doorClosedCh    = make(chan bool, config.ControlBufferSize)
+		obstructionCh   = make(chan bool, config.ControlBufferSize)
+		motorInactiveCh <-chan time.Time
+		doorTimerCh     <-chan time.Time
+		orders          Orders
 	)
 
 	go Door(doorClosedCh, doorOpenCh, obstructionCh)
@@ -32,7 +34,7 @@ func ElevatorStateMachine(
 		case <-motorTimer.C:
 			if state.IsActive && state.CurrentBehaviour == Moving {
 				state.IsActive = false
-				fmt.Printf("[%v][ElevControl]: Motorpower lost. \n", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Motorpower lost.\n", time.Now().Format(time.TimeOnly))
 				newStateCh <- state
 			}
 			stopTimer(motorTimer)
@@ -77,7 +79,7 @@ func ElevatorStateMachine(
 					newStateCh <- state
 				}
 			default:
-				fmt.Printf("[%v][ElevControl]: Invalid state: Door open with no orders. \n", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Invalid state: Door open with no orders.\n", time.Now().Format(time.TimeOnly))
 			}
 
 		case state.CurrentFloor = <-floorEnteredCh:
@@ -121,7 +123,7 @@ func ElevatorStateMachine(
 					elevio.SetMotorDirection(elevio.MD_Stop)
 				}
 			default:
-				fmt.Printf("[%v][ElevControl]: Invalid state: Floor entered while not moving. \n", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Invalid state: Floor entered while not moving.\n", time.Now().Format(time.TimeOnly))
 			}
 			newStateCh <- state
 
@@ -165,6 +167,7 @@ func ElevatorStateMachine(
 					doorOpenCh <- true
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 				}
+
 			case Moving:
 
 			default:
