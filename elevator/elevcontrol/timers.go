@@ -7,6 +7,7 @@ func resetTimer(timer *time.Timer, timeOut time.Duration) <-chan time.Time {
 	return timer.C
 }
 
-func stopTimer(timer *time.Timer) {
+func stopTimer(timer *time.Timer) <-chan time.Time {
 	timer.Stop()
+    return nil
 }

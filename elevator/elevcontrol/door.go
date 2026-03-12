@@ -19,6 +19,7 @@ func Door(
 	doorClosedCh  chan<- bool,
 	doorOpenCh    <-chan bool,
 	obstructionCh chan<- bool,
+    doorTimerCh   <-chan time.Time,
 ) {
 	elevio.SetDoorOpenLamp(false)
 	obstructionPollCh := make(chan bool)
@@ -33,7 +34,9 @@ func Door(
 		select {
 		case obstruction = <-obstructionPollCh:
 			if !obstruction && doorState == Obstructed {
-				doorState = OpenCountdown
+				elevio.SetDoorOpenLamp(false)
+                doorClosedCh <- true
+                doorState = Closed
 			}
 
 			obstructionCh <- (obstruction && doorState != Closed)
@@ -59,7 +62,7 @@ func Door(
 
 			obstructionCh <- (obstruction && doorState != Closed)
 
-		case <-doorTimer.C:
+		case <-doorTimerCh:
 			if doorState != OpenCountdown {
 				fmt.Printf("[%v][ElevControl]: Invalid door state: Door timer expired while door not open.\n", time.Now().Format(time.TimeOnly))
 			}

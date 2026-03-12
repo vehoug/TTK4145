@@ -5,7 +5,6 @@ import (
 	"elevator/elevio"
     "time"
 	"fmt"
-	"time"
 )
 
 func (order Orders) orderInDirection(currentFloor int, direction Direction) bool {
@@ -36,12 +35,12 @@ func (order Orders) orderInDirection(currentFloor int, direction Direction) bool
 	}
 }
 
-func (order Orders) reportCompletedOrder(floor int, direction Direction, orderDoneC chan<- elevio.ButtonEvent) {
+func (order Orders) reportCompletedOrder(floor int, direction Direction, orderDoneCh chan<- elevio.ButtonEvent) {
 	if order[floor][elevio.BT_Cab] {
 		orderDoneCh <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
 	if order[floor][direction] {
-		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: direction.directionToButton()}
+		orderDoneCh <- elevio.ButtonEvent{Floor: floor, Button: direction.directionToButton()}
 	}
 }
 
