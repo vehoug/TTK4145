@@ -28,7 +28,7 @@ func (order Orders) orderInDirection(currentFloor int, direction Direction) bool
 		}
 		return false
 	default:
-		fmt.Printf("[%v][ElevControl] Invalid direction", time.Now().Format(time.TimeOnly))
+		fmt.Printf("[%v][ElevControl]: Invalid direction. \n", time.Now().Format(time.TimeOnly))
 		return false
 	}
 }

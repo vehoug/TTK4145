@@ -32,7 +32,7 @@ func ElevatorStateMachine(
 		case <-motorTimer.C:
 			if state.IsActive && state.CurrentBehaviour == Moving {
 				state.IsActive = false
-				fmt.Printf("[%v][ElevControl]: Motorpower lost", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Motorpower lost. \n", time.Now().Format(time.TimeOnly))
 				newStateCh <- state
 			}
 			stopTimer(motorTimer)
@@ -121,7 +121,7 @@ func ElevatorStateMachine(
 					elevio.SetMotorDirection(elevio.MD_Stop)
 				}
 			default:
-				fmt.Printf("[%v][ElevControl]: Invalid state: Floor entered while not moving", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Invalid state: Floor entered while not moving. \n", time.Now().Format(time.TimeOnly))
 			}
 			newStateCh <- state
 

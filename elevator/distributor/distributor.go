@@ -58,7 +58,7 @@ func Distributor(
 		case <-disconnectTimer.C:
 			commonState.makeOthersUnavailable(id)
 			offline = true
-			fmt.Printf("[%v][Distributor]: Network connection lost. Operating independently.", time.Now().Format(time.TimeOnly))
+			fmt.Printf("[%v][Distributor]: Network connection lost. Operating independently.\n", time.Now().Format(time.TimeOnly))
 
 		case peersStatus = <-peerUpdateCh:
 			commonState.makeInactivePeersUnavailable(peersStatus)

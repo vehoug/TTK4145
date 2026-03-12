@@ -53,14 +53,14 @@ func Door(
 				doorState = OpenCountdown
 
 			default:
-				fmt.Printf("[%v][Door]: Invalid state: Door opened while door not closed", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][Door]: Invalid state: Door opened while door not closed. \n", time.Now().Format(time.TimeOnly))
 			}
 
 			obstructionCh <- (obstruction && doorState != Closed)
 
 		case <-doorTimer.C:
 			if doorState != OpenCountdown {
-				fmt.Printf("[%v][Door]: Invalid state: Door timer expired while door not open", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][Door]: Invalid state: Door timer expired while door not open. \n", time.Now().Format(time.TimeOnly))
 			}
 
 			if obstruction {
