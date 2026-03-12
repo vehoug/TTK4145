@@ -137,7 +137,7 @@ func Distributor(
 				commonState.PeerSyncStatus[id] = Synced
 				offline = false
 				idle = false
-				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally.", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally. \n", time.Now().Format(time.TimeOnly))
 
 			} else if idle {
 				if arrivingCommonState.isNewerThan(commonState) {
