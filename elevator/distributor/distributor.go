@@ -128,11 +128,11 @@ func Distributor(
 				})
 			}
 
-		case arrivedCommonState := <-networkReceiveCh:
+		case arrivingCommonState := <-networkReceiveCh:
             disconnectTimer = time.NewTimer(config.DisconnectTime)
 			if offline {
-				arrivedCommonState.mergeCommonStates(commonState, id)
-				commonState = arrivedCommonState
+				arrivingCommonState.mergeCommonStates(commonState, id)
+				commonState = arrivingCommonState
 				commonState.makeInactivePeersUnavailable(peersStatus)
 				commonState.PeerSyncStatus[id] = Synced
 				offline = false
@@ -140,26 +140,26 @@ func Distributor(
 				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally.\n", time.Now().Format(time.TimeOnly))
 
 			} else if idle {
-				if arrivedCommonState.isNewerThan(commonState) {
-					commonState = arrivedCommonState
+				if arrivingCommonState.isNewerThan(commonState) {
+					commonState = arrivingCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 					idle = false
 				}
 
 			} else {
-				if arrivedCommonState.isOlderThan(commonState) {
+				if arrivingCommonState.isOlderThan(commonState) {
 					break
 				}
 
 				switch {
-				case arrivedCommonState.isNewerThan(commonState):
-					commonState = arrivedCommonState
+				case arrivingCommonState.isNewerThan(commonState):
+					commonState = arrivingCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 
-				case arrivedCommonState.fullySynced(id):
-					commonState = arrivedCommonState
+				case arrivingCommonState.fullySynced(id):
+					commonState = arrivingCommonState
 					syncedCommonStateCh <- commonState
 
 					if len(pendingQueue) > 0 {
@@ -183,8 +183,8 @@ func Distributor(
 						idle = true
 					}
 
-				case commonState.equalsIgnoringSyncStatus(arrivedCommonState):
-					commonState = arrivedCommonState
+				case commonState.equalsIgnoringSyncStatus(arrivingCommonState):
+					commonState = arrivingCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced
 				}
