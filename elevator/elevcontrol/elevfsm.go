@@ -77,7 +77,7 @@ func ElevatorStateMachine(
 					newStateCh <- state
 				}
 			default:
-				fmt.Printf("[%v][ElevControl]: Invalid state: Door open with no orders", time.Now().Format(time.TimeOnly))
+				fmt.Printf("[%v][ElevControl]: Invalid state: Door open with no orders. \n", time.Now().Format(time.TimeOnly))
 			}
 
 		case state.CurrentFloor = <-floorEnteredCh:
