@@ -6,21 +6,15 @@ import (
 	"elevator/elevio"
 )
 
-func SetLights(commonState distributor.CommonState, ElevatorID int) {
-	for floor := 0; floor < config.NumFloors; floor++ {
-		for buttonType := 0; buttonType < 2; buttonType++ {
-			if commonState.HallRequests[floor][buttonType] {
-				elevio.SetButtonLamp(elevio.ButtonType(buttonType), floor, true)
-			} else {
-				elevio.SetButtonLamp(elevio.ButtonType(buttonType), floor, false)
-			}
+func SetLights(commonState distributor.CommonState, id int) {
+	for floor := range config.NumFloors {
+		for buttonType := range config.NumDirections {
+			activeHallRequest := commonState.HallRequests[floor][buttonType]
+            elevio.SetButtonLamp(elevio.ButtonType(buttonType), floor, activeHallRequest)
 		}
 	}
-	for floor := 0; floor < config.NumFloors; floor++ {
-		if commonState.LocalStates[ElevatorID].CabRequests[floor] {
-			elevio.SetButtonLamp(elevio.BT_Cab, floor, true)
-		} else {
-			elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
-		}
+	for floor := range config.NumFloors {
+		activeCabRequest := commonState.LocalStates[id].CabRequests[floor]
+        elevio.SetButtonLamp(elevio.BT_Cab, floor, activeCabRequest)
 	}
 }

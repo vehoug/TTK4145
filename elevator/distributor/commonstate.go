@@ -35,7 +35,6 @@ func (commonState *CommonState) initCommonState(id int) {
 		commonState.PeerSyncStatus[elev] = Unavailable
 	}
 	commonState.PeerSyncStatus[id] = Synced
-
 	commonState.LocalStates[id].State.IsActive = true
 }
 
@@ -56,20 +55,17 @@ func (commonState *CommonState) removeOrder(deliveredOrder elevio.ButtonEvent, i
 }
 
 func (commonState *CommonState) updateState(newState elevcontrol.State, id int) {
-	commonState.LocalStates[id] = LocalState{
-		State:       newState,
-		CabRequests: commonState.LocalStates[id].CabRequests,
-	}
+	commonState.LocalStates[id].State = newState
 }
 
-func (arrivedCommonState *CommonState) mergeCommonStates(commonState CommonState, id int) {
+func (arrivingCommonState *CommonState) mergeCommonStates(commonState CommonState, id int) {
 	for floor := range config.NumFloors {
 		for direction := range config.NumDirections {
-			arrivedCommonState.HallRequests[floor][direction] =
-				arrivedCommonState.HallRequests[floor][direction] || commonState.HallRequests[floor][direction]
+			arrivingCommonState.HallRequests[floor][direction] =
+				arrivingCommonState.HallRequests[floor][direction] || commonState.HallRequests[floor][direction]
 		}
 	}
-	arrivedCommonState.LocalStates[id].CabRequests = commonState.LocalStates[id].CabRequests
+	arrivingCommonState.LocalStates[id] = commonState.LocalStates[id]
 }
 
 func (commonState *CommonState) makeInactivePeersUnavailable(activePeers peers.PeerUpdate) {
@@ -94,7 +90,7 @@ func (commonState *CommonState) makeOthersUnavailable(id int) {
 	}
 }
 
-func (commonState *CommonState) prepNewCommonState(id int) {
+func (commonState *CommonState) startNewSyncRound(id int) {
 	commonState.Version++
 	commonState.UpdaterID = id
 	for elev := range commonState.PeerSyncStatus {
@@ -130,8 +126,8 @@ func (commonState CommonState) fullySynced(id int) bool {
 	return true
 }
 
-func (commonState CommonState) equals(arrivedCommonState CommonState) bool {
+func (commonState CommonState) equalsIgnoringSyncStatus(arrivingCommonState CommonState) bool {
 	commonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	arrivedCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
-	return reflect.DeepEqual(commonState, arrivedCommonState)
+	arrivingCommonState.PeerSyncStatus = [config.NumElevators]SyncStatus{}
+	return reflect.DeepEqual(commonState, arrivingCommonState)
 }

@@ -33,7 +33,7 @@ func Distributor(
 	newStateCh          <-chan elevcontrol.State,
 	id                  int,
 ) {
-	newOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
+	newOrderCh := make(chan elevio.ButtonEvent, config.IOBufferSize)
 	go elevio.PollButtons(newOrderCh)
 
 	pendingQueue := make([]PendingOperation, 0)
@@ -58,7 +58,7 @@ func Distributor(
 		case <-disconnectTimer.C:
 			commonState.makeOthersUnavailable(id)
 			offline = true
-			fmt.Printf("[Node %d]: Network connection lost. Operating independently.\n", id)
+			fmt.Printf("[%v][Distributor]: Network connection lost. Operating independently.\n", time.Now().Format(time.TimeOnly))
 
 		case peersStatus = <-peerUpdateCh:
 			commonState.makeInactivePeersUnavailable(peersStatus)
@@ -76,7 +76,7 @@ func Distributor(
 				}
 
 			} else if idle {
-				commonState.prepNewCommonState(id)
+				commonState.startNewSyncRound(id)
 				commonState.addOrder(newOrder, id)
 				commonState.PeerSyncStatus[id] = Synced
 				idle = false
@@ -95,7 +95,7 @@ func Distributor(
 				syncedCommonStateCh <- commonState
 
 			} else if idle {
-				commonState.prepNewCommonState(id)
+				commonState.startNewSyncRound(id)
 				commonState.removeOrder(deliveredOrder, id)
 				commonState.PeerSyncStatus[id] = Synced
 				idle = false
@@ -116,7 +116,7 @@ func Distributor(
 				}
 
 			} else if idle {
-				commonState.prepNewCommonState(id)
+				commonState.startNewSyncRound(id)
 				commonState.updateState(newState, id)
 				commonState.PeerSyncStatus[id] = Synced
 				idle = false
@@ -129,6 +129,7 @@ func Distributor(
 			}
 
 		case arrivedCommonState := <-networkReceiveCh:
+            disconnectTimer = time.NewTimer(config.DisconnectTime)
 			if offline {
 				arrivedCommonState.mergeCommonStates(commonState, id)
 				commonState = arrivedCommonState
@@ -136,10 +137,9 @@ func Distributor(
 				commonState.PeerSyncStatus[id] = Synced
 				offline = false
 				idle = false
-				fmt.Printf("[Node %d]: Network connection restored. Operating normally.\n", id)
+				fmt.Printf("[%v][Distributor]: Network connection restored. Operating normally.\n", time.Now().Format(time.TimeOnly))
 
 			} else if idle {
-				disconnectTimer = time.NewTimer(config.DisconnectTime)
 				if arrivedCommonState.isNewerThan(commonState) {
 					commonState = arrivedCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
@@ -151,8 +151,6 @@ func Distributor(
 				if arrivedCommonState.isOlderThan(commonState) {
 					break
 				}
-
-				disconnectTimer = time.NewTimer(config.DisconnectTime)
 
 				switch {
 				case arrivedCommonState.isNewerThan(commonState):
@@ -167,7 +165,7 @@ func Distributor(
 					if len(pendingQueue) > 0 {
 						operation := pendingQueue[0]
 						pendingQueue = pendingQueue[1:]
-						commonState.prepNewCommonState(id)
+						commonState.startNewSyncRound(id)
 
 						switch operation.Type {
 						case AddOrder:
@@ -185,7 +183,7 @@ func Distributor(
 						idle = true
 					}
 
-				case commonState.equals(arrivedCommonState):
+				case commonState.equalsIgnoringSyncStatus(arrivedCommonState):
 					commonState = arrivedCommonState
 					commonState.makeInactivePeersUnavailable(peersStatus)
 					commonState.PeerSyncStatus[id] = Synced

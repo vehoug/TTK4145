@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -24,16 +25,16 @@ func main() {
 
 	elevio.Init(fmt.Sprintf("localhost:%d", port), config.NumFloors)
 
-	newOrderCh       := make(chan elevcontrol.Orders, config.Buffer)
-	deliveredOrderCh := make(chan elevio.ButtonEvent, config.Buffer)
-	newStateCh       := make(chan elevcontrol.State, config.Buffer)
+	newOrderCh       := make(chan elevcontrol.Orders, config.IOBufferSize)
+	deliveredOrderCh := make(chan elevio.ButtonEvent, config.IOBufferSize)
+	newStateCh       := make(chan elevcontrol.State,  config.IOBufferSize)
 
-	syncedCommonStateCh := make(chan distributor.CommonState, config.Buffer)
-	networkReceiveCh    := make(chan distributor.CommonState, config.Buffer)
-	networkTransmitCh   := make(chan distributor.CommonState, config.Buffer)
+	syncedCommonStateCh := make(chan distributor.CommonState, config.IOBufferSize)
+	networkReceiveCh    := make(chan distributor.CommonState, config.IOBufferSize)
+	networkTransmitCh   := make(chan distributor.CommonState, config.IOBufferSize)
 
-	peerUpdateCh    := make(chan peers.PeerUpdate, config.Buffer)
-	peersTransmitCh := make(chan bool, config.Buffer)
+	peerUpdateCh    := make(chan peers.PeerUpdate, config.IOBufferSize)
+	peersTransmitCh := make(chan bool, config.IOBufferSize)
 
 	go peers.Receiver(config.PeersPortNumber, peerUpdateCh)
 	go peers.Transmitter(config.PeersPortNumber, strconv.Itoa(id), peersTransmitCh)
@@ -55,8 +56,8 @@ func main() {
 		newStateCh,
 		deliveredOrderCh)
 
-	fmt.Printf("[Node %d]: Elevator initialized.\n\tNumber of floors: %d\n\tNumber of elevators: %d\n",
-		id, config.NumFloors, config.NumElevators)
+	fmt.Printf("[%v][Main]: Elevator initialized.\nNumber of floors: %d\nNumber of elevators: %d\n",
+		time.Now().Format(time.TimeOnly), config.NumFloors, config.NumElevators)
 
 	for commonState := range syncedCommonStateCh {
 		newOrderCh <- assigner.CalculateOptimalOrders(commonState, id)
