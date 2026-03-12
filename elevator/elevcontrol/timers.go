@@ -2,12 +2,11 @@ package elevcontrol
 
 import "time"
 
-func resetTimer(timer *time.Timer, timeout time.Duration) <-chan time.Time {
-	timer = time.NewTimer(timeout)
+func resetTimer(timer *time.Timer, timeOut time.Duration) <-chan time.Time {
+	timer.Reset(timeOut)
 	return timer.C
 }
 
-func stopTimer(timer *time.Timer) <-chan time.Time {
+func stopTimer(timer *time.Timer) {
 	timer.Stop()
-	return nil
 }

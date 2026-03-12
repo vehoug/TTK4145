@@ -19,7 +19,6 @@ func Door(
 	doorClosedCh  chan<- bool,
 	doorOpenCh    <-chan bool,
 	obstructionCh chan<- bool,
-	doorTimerCh   <-chan time.Time,
 ) {
 	elevio.SetDoorOpenLamp(false)
 	obstructionPollCh := make(chan bool)
@@ -34,9 +33,7 @@ func Door(
 		select {
 		case obstruction = <-obstructionPollCh:
 			if !obstruction && doorState == Obstructed {
-				elevio.SetDoorOpenLamp(false)
-				doorClosedCh <- true
-				doorState = Closed
+				doorState = OpenCountdown
 			}
 
 			obstructionCh <- (obstruction && doorState != Closed)
@@ -45,27 +42,25 @@ func Door(
 			switch doorState {
 			case Closed:
 				elevio.SetDoorOpenLamp(true)
-				doorTimerCh = resetTimer(doorTimer, config.DoorOpenDuration)
+				resetTimer(doorTimer, config.DoorOpenTime)
 				doorState = OpenCountdown
 
 			case OpenCountdown:
-				doorTimerCh = resetTimer(doorTimer, config.DoorOpenDuration)
+				resetTimer(doorTimer, config.DoorOpenTime)
 
 			case Obstructed:
-				doorTimerCh = resetTimer(doorTimer, config.DoorOpenDuration)
+				resetTimer(doorTimer, config.DoorOpenTime)
 				doorState = OpenCountdown
 
 			default:
-				panic("Door state not implemented")
-
+				fmt.Printf("[%v][Door]: Invalid state: Door opened while door not closed", time.Now().Format(time.TimeOnly))
 			}
 
 			obstructionCh <- (obstruction && doorState != Closed)
 
-		case <-doorTimerCh:
+		case <-doorTimer.C:
 			if doorState != OpenCountdown {
-				fmt.Printf("Door timer fired in state=%d obstruction=%v\n", doorState, obstruction)
-				panic("Door state not implemented")
+				fmt.Printf("[%v][Door]: Invalid state: Door timer expired while door not open", time.Now().Format(time.TimeOnly))
 			}
 
 			if obstruction {

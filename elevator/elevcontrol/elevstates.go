@@ -29,7 +29,7 @@ type Orders [config.NumFloors][config.NumButtons]bool
 
 func initState() State {
 	return State{
-		CurrentFloor:     -1,
+		CurrentFloor:     config.UnknownFloor,
 		Direction:        Down,
 		CurrentBehaviour: Moving,
 		IsActive:         true,
