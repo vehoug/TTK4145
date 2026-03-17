@@ -13,10 +13,10 @@ func ElevatorStateMachine(
 	deliveredOrderCh chan<- elevio.ButtonEvent,
 ) {
 	var (
-		floorEnteredCh  = make(chan int, config.ChannelBufferSize)
-		doorOpenCh      = make(chan bool, config.ChannelBufferSize)
-		doorClosedCh    = make(chan bool, config.ChannelBufferSize)
-		obstructionCh   = make(chan bool, config.ChannelBufferSize)
+		floorEnteredCh  = make(chan int,  config.ControlBufferSize)
+		doorOpenCh      = make(chan bool, config.ControlBufferSize)
+		doorClosedCh    = make(chan bool, config.ControlBufferSize)
+		obstructionCh   = make(chan bool, config.ControlBufferSize)
 		motorInactiveCh <-chan time.Time
 		doorTimerCh     <-chan time.Time
 		orders          Orders
@@ -26,10 +26,8 @@ func ElevatorStateMachine(
 	go elevio.PollFloorSensor(floorEnteredCh)
 
 	motorTimer := time.NewTimer(config.WatchdogTime)
-
 	elevio.SetMotorDirection(elevio.MD_Down)
-	motorInactiveCh = resetTimer(motorTimer, config.WatchdogTime)
-
+    motorInactiveCh = resetTimer(motorTimer, config.WatchdogTime)
 	state := initState()
 
 	for {
@@ -37,7 +35,7 @@ func ElevatorStateMachine(
 		case <-motorInactiveCh:
 			if state.IsActive && state.CurrentBehaviour == Moving {
 				state.IsActive = false
-				fmt.Printf("Motorpower lost")
+				fmt.Printf("[%v][ElevControl]: Motorpower lost.\n", time.Now().Format(time.TimeOnly))
 				newStateCh <- state
 			}
 			motorInactiveCh = stopTimer(motorTimer)
@@ -82,7 +80,7 @@ func ElevatorStateMachine(
 					newStateCh <- state
 				}
 			default:
-				fmt.Printf("Invalid state: Door open with no orders")
+				fmt.Printf("[%v][ElevControl]: Invalid state: Door open with no orders.\n", time.Now().Format(time.TimeOnly))
 			}
 
 		case state.CurrentFloor = <-floorEnteredCh:
@@ -125,8 +123,9 @@ func ElevatorStateMachine(
 					state.CurrentBehaviour = Idle
 					elevio.SetMotorDirection(elevio.MD_Stop)
 				}
+
 			default:
-				fmt.Printf("Invalid state: Floor entered while not moving")
+				fmt.Printf("[%v][ElevControl]: Invalid state: Floor entered while not moving.\n", time.Now().Format(time.TimeOnly))
 			}
 			newStateCh <- state
 
@@ -170,6 +169,7 @@ func ElevatorStateMachine(
 					doorOpenCh <- true
 					orders.reportCompletedOrder(state.CurrentFloor, state.Direction, deliveredOrderCh)
 				}
+
 			case Moving:
 
 			default:

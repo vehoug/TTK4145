@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"time"
 )
 
 type HRAState struct {
@@ -19,23 +20,21 @@ type HRAState struct {
 }
 
 type HRAInput struct {
-	HallRequests [config.NumFloors][2]bool `json:"hallRequests"`
-	States       map[string]HRAState       `json:"states"`
+	HallRequests [config.NumFloors][config.NumDirections]bool `json:"hallRequests"`
+	States       map[string]HRAState                          `json:"states"`
 }
 
 func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevcontrol.Orders {
-
 	stateMap := make(map[string]HRAState)
-	for i, v := range commonState.LocalStates {
-		if commonState.PeerSyncStatus[i] == distributor.Unavailable || !v.State.IsActive || v.State.Obstructed {
+	for elev, localState := range commonState.LocalStates {
+		if commonState.PeerSyncStatus[elev] == distributor.Unavailable || !localState.State.IsActive || localState.State.Obstructed {
 			continue
-		} else {
-			stateMap[strconv.Itoa(i)] = HRAState{
-				Behaviour:   v.State.CurrentBehaviour.BehaviorToString(),
-				Floor:       v.State.CurrentFloor,
-				Direction:   v.State.Direction.DirectionToString(),
-				CabRequests: v.CabRequests,
-			}
+		}
+		stateMap[strconv.Itoa(elev)] = HRAState{
+			Behaviour:   localState.State.CurrentBehaviour.BehaviorToString(),
+			Floor:       localState.State.CurrentFloor,
+			Direction:   localState.State.Direction.DirectionToString(),
+			CabRequests: localState.CabRequests,
 		}
 	}
 
@@ -49,31 +48,34 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevcon
 	switch runtime.GOOS {
 	case "linux":
 		hraExecutable = "hall_request_assigner"
+
 	case "darwin":
 		hraExecutable = "hall_request_assigner_mac"
+
 	case "windows":
 		hraExecutable = "hall_request_assigner.exe"
+
 	default:
 		panic("OS not supported")
 	}
 
 	jsonBytes, err := json.Marshal(hraInput)
 	if err != nil {
-		fmt.Println("json.Marshal error: ", err)
+		fmt.Printf("[%v][Assigner]: json.Marshal error: %v", time.Now().Format(time.TimeOnly), err)
 		panic("json.Marshal error")
 	}
 
-	ret, err := exec.Command("assigner/executables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
+	outputBytes, err := exec.Command("assigner/executables/" + hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
-		fmt.Println("exec.Command error: ", err)
-		fmt.Println(string(ret))
+		fmt.Printf("[%v][Assigner]: exec.Command error: %v", time.Now().Format(time.TimeOnly), err)
+		fmt.Printf("[%v][Assigner]: Output: %v", time.Now().Format(time.TimeOnly), string(outputBytes))
 		panic("exec.Command error")
 	}
 
 	output := new(map[string]elevcontrol.Orders)
-	err = json.Unmarshal(ret, &output)
+	err = json.Unmarshal(outputBytes, &output)
 	if err != nil {
-		fmt.Println("json.Unmarshal error: ", err)
+		fmt.Printf("[%v][Assigner]: json.Unmarshal error: %v", time.Now().Format(time.TimeOnly), err)
 		panic("json.Unmarshal error")
 	}
 

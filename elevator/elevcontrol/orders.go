@@ -3,58 +3,62 @@ package elevcontrol
 import (
 	"elevator/config"
 	"elevator/elevio"
+    "time"
 	"fmt"
 )
 
-func (order Orders) orderInDirection(floor int, dir Direction) bool {
-	switch dir {
+func (order Orders) orderInDirection(currentFloor int, direction Direction) bool {
+	switch direction {
 	case Up:
-		for f := floor + 1; f < config.NumFloors; f++ {
-			for b := 0; b < config.NumButtons; b++ {
-				if order[f][b] {
+		for floor := currentFloor + 1; floor < config.NumFloors; floor++ {
+			for button := range config.NumButtons {
+				if order[floor][button] {
 					return true
 				}
 			}
 		}
 		return false
+
 	case Down:
-		for f := floor - 1; f >= 0; f-- {
-			for b := 0; b < config.NumButtons; b++ {
-				if order[f][b] {
+		for floor := currentFloor - 1; floor >= 0; floor-- {
+			for button := range config.NumButtons {
+				if order[floor][button] {
 					return true
 				}
 			}
 		}
 		return false
+
 	default:
-		fmt.Println("Invalid direction")
+		fmt.Printf("[%v][ElevControl]: Invalid direction.\n", time.Now().Format(time.TimeOnly))
 		return false
 	}
 }
 
-func (order Orders) reportCompletedOrder(floor int, dir Direction, orderDoneC chan<- elevio.ButtonEvent) {
+func (order Orders) reportCompletedOrder(floor int, direction Direction, orderDoneCh chan<- elevio.ButtonEvent) {
 	if order[floor][elevio.BT_Cab] {
-		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
+		orderDoneCh <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
-	if order[floor][dir] {
-		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: dir.directionToButton()}
+	if order[floor][direction] {
+		orderDoneCh <- elevio.ButtonEvent{Floor: floor, Button: direction.directionToButton()}
 	}
 }
-func (order Orders) orderAtCurrentFloorOppositeDirection(floor int, dir Direction) bool {
-	return order[floor][dir.Opposite()]
+
+func (order Orders) orderAtCurrentFloorOppositeDirection(floor int, direction Direction) bool {
+	return order[floor][direction.Opposite()]
 }
 
-func (order Orders) orderOppositeDirection(floor int, dir Direction) bool {
-	return order.orderInDirection(floor, dir.Opposite())
+func (order Orders) orderOppositeDirection(floor int, direction Direction) bool {
+	return order.orderInDirection(floor, direction.Opposite())
 }
 
-func (order Orders) orderAtCurrentFloorSameDirection(floor int, dir Direction) bool {
-	return order[floor][dir]
+func (order Orders) orderAtCurrentFloorSameDirection(floor int, direction Direction) bool {
+	return order[floor][direction]
 }
 
-func (order Orders) shouldStopForCabOrder(floor int, dir Direction) bool {
+func (order Orders) shouldStopForCabOrder(floor int, direction Direction) bool {
 	if !order[floor][elevio.BT_Cab] {
 		return false
 	}
-	return order.orderInDirection(floor, dir) || !order.orderAtCurrentFloorOppositeDirection(floor, dir)
+	return order.orderInDirection(floor, direction) || !order.orderAtCurrentFloorOppositeDirection(floor, direction)
 }
