@@ -62,21 +62,18 @@ func CalculateOptimalOrders(commonState distributor.CommonState, id int) elevcon
 	jsonBytes, err := json.Marshal(hraInput)
 	if err != nil {
 		fmt.Printf("[%v][Assigner]: json.Marshal error: %v", time.Now().Format(time.TimeOnly), err)
-		panic("json.Marshal error")
 	}
 
 	outputBytes, err := exec.Command("assigner/executables/" + hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Printf("[%v][Assigner]: exec.Command error: %v", time.Now().Format(time.TimeOnly), err)
 		fmt.Printf("[%v][Assigner]: Output: %v", time.Now().Format(time.TimeOnly), string(outputBytes))
-		panic("exec.Command error")
 	}
 
 	output := new(map[string]elevcontrol.Orders)
 	err = json.Unmarshal(outputBytes, &output)
 	if err != nil {
 		fmt.Printf("[%v][Assigner]: json.Unmarshal error: %v", time.Now().Format(time.TimeOnly), err)
-		panic("json.Unmarshal error")
 	}
 
 	return (*output)[strconv.Itoa(id)]
